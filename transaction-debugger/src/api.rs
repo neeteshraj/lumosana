@@ -7,7 +7,10 @@ use tracing::instrument;
 #[instrument]
 pub async fn debug_tx(req: web::Json<DebugRequest>) -> Result<impl Responder> {
     match analyze_transaction(&req.signature, &req.rpc_url).await {
-        Ok(response) => Ok(HttpResponse::Ok().json(response)),
+        Ok(response) => {
+            // Return the full response object directly, not wrapped in result
+            Ok(HttpResponse::Ok().json(response))
+        },
         Err(e) => Ok(HttpResponse::InternalServerError().json(serde_json::json!({
             "error": e,
             "message": "Failed to analyze transaction"

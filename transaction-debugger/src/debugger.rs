@@ -1,7 +1,7 @@
 use solana_client::rpc_client::RpcClient;
 use solana_transaction_status::{EncodedConfirmedTransactionWithStatusMeta, UiTransactionEncoding};
 use solana_sdk::signature::Signature;
-use crate::models::{DebugResponse, TransactionAnalysis};
+use crate::models::{DebugResponse, TransactionAnalysis, TransactionDetails, InstructionDetail};
 use tracing::{info, error, instrument};
 use std::str::FromStr;
 use tokio::task;
@@ -30,6 +30,7 @@ pub async fn analyze_transaction(sig: &str, rpc_url: &str) -> Result<DebugRespon
     }).await.map_err(|e| format!("Task join error: {}", e))??;
 
     let analysis = perform_analysis(&transaction);
+    let transaction_details = extract_transaction_details(&transaction);
     
     let response = DebugResponse {
         signature: sig.to_string(),
@@ -38,6 +39,7 @@ pub async fn analyze_transaction(sig: &str, rpc_url: &str) -> Result<DebugRespon
         transaction: serde_json::to_value(&transaction).unwrap_or_default(),
         meta: transaction.transaction.meta.clone(),
         analysis,
+        transaction_details,
     };
 
     info!("Transaction analysis completed for: {}", sig);
@@ -137,4 +139,102 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
     analysis.program_ids.dedup();
 
     analysis
+}
+
+fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionDetails {
+    let mut details = TransactionDetails {
+        version: "legacy".to_string(), // Default to legacy for now
+        recent_blockhash: None,
+        signatures: Vec::new(),
+        message_type: "unknown".to_string(),
+        account_keys_count: 0,
+        instruction_details: Vec::new(),
+        inner_instructions_count: 0,
+    };
+
+    // Extract inner instructions count
+    if let Some(meta) = &transaction.transaction.meta {
+        match &meta.inner_instructions {
+            solana_transaction_status::option_serializer::OptionSerializer::Some(inner_instructions) => {
+                details.inner_instructions_count = inner_instructions.len();
+            },
+            _ => {}
+        }
+    }
+
+    // Extract transaction details from the encoded transaction
+    match &transaction.transaction.transaction {
+        solana_transaction_status::EncodedTransaction::Json(ui_tx) => {
+            details.message_type = "parsed".to_string();
+            
+            match &ui_tx.message {
+                solana_transaction_status::UiMessage::Parsed(parsed_message) => {
+                    details.account_keys_count = parsed_message.account_keys.len();
+                    details.recent_blockhash = Some(parsed_message.recent_blockhash.clone());
+
+                    // Extract basic instruction information
+                    for (index, instruction) in parsed_message.instructions.iter().enumerate() {
+                        let instruction_detail = match instruction {
+                            solana_transaction_status::UiInstruction::Parsed(_parsed_inst) => {
+                                InstructionDetail {
+                                    program_id: format!("parsed_instruction_{}", index),
+                                    program_name: None,
+                                    instruction_type: "parsed".to_string(),
+                                    accounts_used: Vec::new(),
+                                    data_length: 0,
+                                }
+                            },
+                            solana_transaction_status::UiInstruction::Compiled(compiled_inst) => {
+                                let program_id = parsed_message.account_keys
+                                    .get(compiled_inst.program_id_index as usize)
+                                    .map(|acc| acc.pubkey.clone())
+                                    .unwrap_or_else(|| format!("Unknown-{}", compiled_inst.program_id_index));
+                                
+                                InstructionDetail {
+                                    program_id,
+                                    program_name: None,
+                                    instruction_type: "compiled".to_string(),
+                                    accounts_used: compiled_inst.accounts.iter()
+                                        .filter_map(|&idx| parsed_message.account_keys.get(idx as usize))
+                                        .map(|acc| acc.pubkey.clone())
+                                        .collect(),
+                                    data_length: compiled_inst.data.len(),
+                                }
+                            }
+                        };
+                        details.instruction_details.push(instruction_detail);
+                    }
+                },
+                solana_transaction_status::UiMessage::Raw(raw_message) => {
+                    details.account_keys_count = raw_message.account_keys.len();
+                    details.recent_blockhash = Some(raw_message.recent_blockhash.clone());
+
+                    // Extract instruction details from raw message
+                    for instruction in &raw_message.instructions {
+                        let program_id = raw_message.account_keys
+                            .get(instruction.program_id_index as usize)
+                            .cloned()
+                            .unwrap_or_else(|| format!("Unknown-{}", instruction.program_id_index));
+                        
+                        let instruction_detail = InstructionDetail {
+                            program_id,
+                            program_name: None,
+                            instruction_type: "raw".to_string(),
+                            accounts_used: instruction.accounts.iter()
+                                .filter_map(|&idx| raw_message.account_keys.get(idx as usize))
+                                .cloned()
+                                .collect(),
+                            data_length: instruction.data.len(),
+                        };
+                        details.instruction_details.push(instruction_detail);
+                    }
+                }
+            }
+        },
+        _ => {
+            details.message_type = "other".to_string();
+        }
+    }
+
+    details
 }

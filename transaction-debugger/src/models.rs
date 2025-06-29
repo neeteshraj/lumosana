@@ -15,6 +15,28 @@ pub struct DebugResponse {
     pub transaction: serde_json::Value,
     pub meta: Option<UiTransactionStatusMeta>,
     pub analysis: TransactionAnalysis,
+    // Additional comprehensive fields
+    pub transaction_details: TransactionDetails,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TransactionDetails {
+    pub version: String,
+    pub recent_blockhash: Option<String>,
+    pub signatures: Vec<String>,
+    pub message_type: String,
+    pub account_keys_count: usize,
+    pub instruction_details: Vec<InstructionDetail>,
+    pub inner_instructions_count: usize,
+}
+
+#[derive(Debug, Serialize)]
+pub struct InstructionDetail {
+    pub program_id: String,
+    pub program_name: Option<String>,
+    pub instruction_type: String,
+    pub accounts_used: Vec<String>,
+    pub data_length: usize,
 }
 
 #[derive(Debug, Serialize)]
