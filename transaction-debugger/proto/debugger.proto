@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package debugger;
+
+service TransactionDebugger {
+  rpc DebugTransaction (DebugRequest) returns (DebugResponse);
+}
+
+message DebugRequest {
+  string signature = 1;
+  string rpc_url = 2;
+}
+
+message DebugResponse {
+  string signature = 1;
+  uint64 slot = 2;
+  optional int64 block_time = 3;
+  string transaction_json = 4;  // Raw transaction data as JSON string
+  TransactionAnalysis analysis = 5;
+}
+
+message TransactionAnalysis {
+  bool success = 1;
+  optional string error = 2;
+  optional uint64 compute_units_consumed = 3;
+  optional uint64 fee = 4;
+  repeated string accounts_involved = 5;
+  repeated string program_ids = 6;
+  uint32 instruction_count = 7;
+  repeated uint64 pre_balances = 8;
+  repeated uint64 post_balances = 9;
+  repeated string log_messages = 10;
+}

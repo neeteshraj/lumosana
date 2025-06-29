@@ -1,0 +1,130 @@
+# Rust build artifacts
+target/
+**/*.rs.bk
+*.pdb
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+README.md
+*.md
+docs/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.docker/
+.dockerignore
+
+# Environment files
+.env*
+local.env
+dev.env
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Development tools
+.cargo/
+rust-project.json
+
+# Testing
+coverage/
+*.lcov
+.nyc_output
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+
+# Kubernetes
+k8s/
+*.yaml
+*.yml
+!Cargo.toml
+
+# Scripts (exclude deployment scripts from image)
+scripts/
+
+# Examples (usually not needed in production image)
+examples/
+
+# Node modules (if any)
+node_modules/
+
+# Cache directories
+.cache/
+.parcel-cache/
+
+# Editor backups
+*~
+
+# Rust analyzer files
+rust-project.json
+
+# Local development files
+local.*
+dev.*
+
+# Test files (optional - uncomment if you don't want tests in the image)
+# tests/
+# **/*test.rs
+# **/*tests.rs

@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transaction-debugger
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: transaction-debugger
+  template:
+    metadata:
+      labels:
+        app: transaction-debugger
+    spec:
+      containers:
+      - name: debugger
+        image: transaction-debugger:latest
+        ports:
+        - containerPort: 8080
+        - containerPort: 50051
+        envFrom:
+        - configMapRef:
+            name: transaction-debugger-config
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"

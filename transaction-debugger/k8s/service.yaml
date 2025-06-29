@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-debugger-service
+  labels:
+    app: transaction-debugger
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  selector:
+    app: transaction-debugger
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transaction-debugger-lb
+  labels:
+    app: transaction-debugger
+spec:
+  type: LoadBalancer
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8080
+    protocol: TCP
+  - name: grpc
+    port: 50051
+    targetPort: 50051
+    protocol: TCP
+  selector:
+    app: transaction-debugger
