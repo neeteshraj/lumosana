@@ -13,11 +13,9 @@ pub async fn analyze_transaction(sig: &str, rpc_url: &str) -> Result<DebugRespon
     let sig_str = sig.to_string();
     let rpc_url_str = rpc_url.to_string();
     
-    // Move the blocking operation to a separate thread
     let transaction = task::spawn_blocking(move || {
         let client = RpcClient::new(rpc_url_str);
         
-        // Parse the signature string
         let signature = Signature::from_str(&sig_str)
             .map_err(|e| format!("Invalid signature format: {}", e))?;
         
@@ -50,15 +48,12 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
     let mut analysis = TransactionAnalysis::default();
 
     if let Some(meta) = &transaction.transaction.meta {
-        // Determine if transaction was successful
         analysis.success = meta.err.is_none();
         
-        // Extract error if present
         if let Some(err) = &meta.err {
             analysis.error = Some(format!("{:?}", err));
         }
 
-        // Extract compute units consumed if available
         match &meta.compute_units_consumed {
             solana_transaction_status::option_serializer::OptionSerializer::Some(compute_units) => {
                 analysis.compute_units_consumed = Some(*compute_units);
@@ -66,14 +61,11 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
             _ => {}
         }
 
-        // Extract fee
         analysis.fee = Some(meta.fee);
 
-        // Extract balances
         analysis.pre_balances = meta.pre_balances.clone();
         analysis.post_balances = meta.post_balances.clone();
 
-        // Extract log messages if available
         match &meta.log_messages {
             solana_transaction_status::option_serializer::OptionSerializer::Some(logs) => {
                 analysis.log_messages = logs.clone();
@@ -82,7 +74,6 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
         }
     }
 
-    // Extract instruction and account information from the transaction
     let encoded_tx = &transaction.transaction.transaction;
     match encoded_tx {
         solana_transaction_status::EncodedTransaction::Json(ui_tx) => {
@@ -111,10 +102,8 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
                 solana_transaction_status::UiMessage::Raw(raw_message) => {
                     analysis.instruction_count = raw_message.instructions.len();
                     
-                    // Extract account keys from message - raw messages have Vec<String>
                     analysis.accounts_involved = raw_message.account_keys.clone();
 
-                    // For raw messages, extract program IDs from the instruction indexes
                     for instruction in &raw_message.instructions {
                         let program_id_index = instruction.program_id_index;
                         if let Some(program_id) = raw_message.account_keys.get(program_id_index as usize) {
@@ -127,12 +116,10 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
             }
         },
         _ => {
-            // For other encoding types, we'll have limited analysis
             analysis.instruction_count = 0;
         }
     }
 
-    // Remove duplicates from accounts_involved and program_ids
     analysis.accounts_involved.sort();
     analysis.accounts_involved.dedup();
     analysis.program_ids.sort();
@@ -143,7 +130,7 @@ fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> 
 
 fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionDetails {
     let mut details = TransactionDetails {
-        version: "legacy".to_string(), // Default to legacy for now
+        version: "legacy".to_string(), 
         recent_blockhash: None,
         signatures: Vec::new(),
         message_type: "unknown".to_string(),
@@ -152,7 +139,6 @@ fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStat
         inner_instructions_count: 0,
     };
 
-    // Extract inner instructions count
     if let Some(meta) = &transaction.transaction.meta {
         match &meta.inner_instructions {
             solana_transaction_status::option_serializer::OptionSerializer::Some(inner_instructions) => {
@@ -162,7 +148,6 @@ fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStat
         }
     }
 
-    // Extract transaction details from the encoded transaction
     match &transaction.transaction.transaction {
         solana_transaction_status::EncodedTransaction::Json(ui_tx) => {
             details.message_type = "parsed".to_string();
@@ -172,7 +157,6 @@ fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStat
                     details.account_keys_count = parsed_message.account_keys.len();
                     details.recent_blockhash = Some(parsed_message.recent_blockhash.clone());
 
-                    // Extract basic instruction information
                     for (index, instruction) in parsed_message.instructions.iter().enumerate() {
                         let instruction_detail = match instruction {
                             solana_transaction_status::UiInstruction::Parsed(_parsed_inst) => {
@@ -209,7 +193,6 @@ fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStat
                     details.account_keys_count = raw_message.account_keys.len();
                     details.recent_blockhash = Some(raw_message.recent_blockhash.clone());
 
-                    // Extract instruction details from raw message
                     for instruction in &raw_message.instructions {
                         let program_id = raw_message.account_keys
                             .get(instruction.program_id_index as usize)

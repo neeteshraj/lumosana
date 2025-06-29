@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Test the transaction debugger API
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <transaction_signature> [rpc_url]"
@@ -18,7 +17,6 @@ echo "RPC URL: $RPC_URL"
 echo "API Base URL: $BASE_URL"
 echo ""
 
-# Test health check first
 echo "1. Testing health check..."
 curl -f "$BASE_URL/health" && echo "✓ Health check passed" || echo "✗ Health check failed"
 echo ""

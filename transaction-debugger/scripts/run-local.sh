@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# Build and run the transaction debugger locally
-
 echo "Building transaction debugger..."
 cargo build --release
 

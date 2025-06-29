@@ -4,23 +4,18 @@
 
 echo "Deploying Transaction Debugger to Kubernetes..."
 
-# Create namespace if it doesn't exist
 kubectl create namespace transaction-debugger --dry-run=client -o yaml | kubectl apply -f -
 
-# Deploy Jaeger for tracing
 echo "Deploying Jaeger..."
 kubectl apply -f k8s/jaeger.yaml -n transaction-debugger
 
-# Deploy ConfigMap
 echo "Deploying ConfigMap..."
 kubectl apply -f k8s/configmap.yaml -n transaction-debugger
 
-# Deploy the main application
 echo "Deploying Transaction Debugger..."
 kubectl apply -f k8s/deployment.yaml -n transaction-debugger
 kubectl apply -f k8s/service.yaml -n transaction-debugger
 
-# Deploy Envoy proxy
 echo "Deploying Envoy proxy..."
 kubectl apply -f k8s/envoy.yaml -n transaction-debugger
 

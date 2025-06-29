@@ -15,7 +15,6 @@ pub struct DebugResponse {
     pub transaction: serde_json::Value,
     pub meta: Option<UiTransactionStatusMeta>,
     pub analysis: TransactionAnalysis,
-    // Additional comprehensive fields
     pub transaction_details: TransactionDetails,
 }
 

@@ -12,7 +12,6 @@ use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
     tracing::init_tracing();
     
     println!("Starting Transaction Debugger Service");
@@ -20,7 +19,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
     let http_port = env::var("HTTP_PORT").unwrap_or_else(|_| "8080".to_string());
 
-    // Start gRPC server
     let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse()?;
     let debugger_service = DebuggerService;
     
@@ -29,7 +27,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(TransactionDebuggerServer::new(debugger_service))
         .serve(grpc_addr);
 
-    // Start HTTP server
     let http_addr = format!("0.0.0.0:{}", http_port);
     println!("Starting HTTP server on {}", http_addr);
     
@@ -42,7 +39,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     .bind(&http_addr)?
     .run();
 
-    // Run both servers concurrently
     tokio::try_join!(
         async { grpc_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) },
         async { http_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) }
