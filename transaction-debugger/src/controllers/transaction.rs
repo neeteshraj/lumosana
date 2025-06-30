@@ -91,3 +91,20 @@ impl TransactionController {
         }
     }
 }
+
+/// Analyzes and debugs a Solana transaction providing detailed execution information.
+#[utoipa::path(
+    post,
+    path = "/debug",
+    request_body = DebugRequestDto,
+    responses(
+        (status = 200, description = "Transaction debug analysis completed successfully", body = DebugResponseDto),
+        (status = 400, description = "Invalid request parameters"),
+        (status = 404, description = "Transaction not found"),
+        (status = 503, description = "Service unavailable")
+    ),
+    tag = "transaction"
+)]
+pub async fn debug_transaction_api(req: web::Json<DebugRequestDto>) -> Result<impl Responder> {
+    TransactionController::debug_transaction(req).await
+}

@@ -14,9 +14,14 @@ A comprehensive Rust-based service for analyzing and debugging Solana blockchain
   - Log message extraction
 
 - **Multiple Interfaces**:
-  - REST HTTP API
+  - REST HTTP API with OpenAPI/Swagger documentation
   - gRPC API
   - Health check endpoint
+
+- **API Documentation**:
+  - Interactive Swagger UI
+  - OpenAPI 3.0 specification
+  - Comprehensive schema documentation
 
 - **Observability**:
   - Distributed tracing with Jaeger
@@ -28,6 +33,15 @@ A comprehensive Rust-based service for analyzing and debugging Solana blockchain
   - Docker containerized
   - Envoy proxy integration
   - ConfigMap configuration
+
+## API Documentation
+
+The service provides comprehensive API documentation through Swagger UI:
+
+- **Swagger UI**: http://localhost:8080/swagger-ui/
+- **OpenAPI JSON**: http://localhost:8080/api-docs/openapi.json
+
+The Swagger UI provides an interactive interface to explore and test all API endpoints with detailed schema documentation.
 
 ## API Endpoints
 

@@ -1,54 +1,88 @@
 use crate::models::transaction::{InstructionDetail, TransactionAnalysis, TransactionDetails};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct DebugRequestDto {
+    /// Solana transaction signature to analyze
+    #[schema(example = "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW")]
     pub signature: String,
+    /// RPC URL to use for fetching transaction data
+    #[schema(example = "https://api.mainnet-beta.solana.com")]
     pub rpc_url: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct DebugResponseDto {
+    /// Transaction signature
     pub signature: String,
+    /// Blockchain slot number
     pub slot: u64,
+    /// Block timestamp
     pub block_time: Option<i64>,
+    /// Raw transaction data
     pub transaction: serde_json::Value,
+    /// Transaction metadata
     pub meta: Option<solana_transaction_status::UiTransactionStatusMeta>,
+    /// Transaction analysis results
     pub analysis: TransactionAnalysisDto,
+    /// Detailed transaction breakdown
     pub transaction_details: TransactionDetailsDto,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct TransactionDetailsDto {
+    /// Transaction version (legacy or v0)
     pub version: String,
+    /// Recent blockhash used in transaction
     pub recent_blockhash: Option<String>,
+    /// Transaction signatures
     pub signatures: Vec<String>,
+    /// Message type (parsed, raw, etc.)
     pub message_type: String,
+    /// Number of account keys in transaction
     pub account_keys_count: usize,
+    /// Details of each instruction
     pub instruction_details: Vec<InstructionDetailDto>,
+    /// Number of inner instructions
     pub inner_instructions_count: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct InstructionDetailDto {
+    /// Program ID that executed the instruction
     pub program_id: String,
+    /// Human-readable program name (if known)
     pub program_name: Option<String>,
+    /// Type of instruction (compiled, parsed, etc.)
     pub instruction_type: String,
+    /// Accounts used by this instruction
     pub accounts_used: Vec<String>,
+    /// Length of instruction data
     pub data_length: usize,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct TransactionAnalysisDto {
+    /// Whether the transaction executed successfully
     pub success: bool,
+    /// Error message if transaction failed
     pub error: Option<String>,
+    /// Compute units consumed by transaction
     pub compute_units_consumed: Option<u64>,
+    /// Transaction fee in lamports
     pub fee: Option<u64>,
+    /// List of accounts involved in the transaction
     pub accounts_involved: Vec<String>,
+    /// List of program IDs called
     pub program_ids: Vec<String>,
+    /// Number of instructions in transaction
     pub instruction_count: usize,
+    /// Account balances before transaction
     pub pre_balances: Vec<u64>,
+    /// Account balances after transaction
     pub post_balances: Vec<u64>,
+    /// Log messages from transaction execution
     pub log_messages: Vec<String>,
 }
 

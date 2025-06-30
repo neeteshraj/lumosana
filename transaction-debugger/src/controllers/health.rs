@@ -5,18 +5,8 @@
 
 use actix_web::{web, HttpResponse, Responder, Result};
 use crate::services::HealthService;
-use crate::dtos::HealthCheckRequestDto;
+use crate::dtos::{HealthCheckRequestDto, HealthQuery};
 use tracing::instrument;
-use serde::Deserialize;
-
-/// Query parameters for basic health check endpoint.
-/// 
-/// Allows filtering health checks by specific service components.
-#[derive(Deserialize, Debug)]
-pub struct HealthQuery {
-    /// Optional service name to check specifically (e.g., "database", "cache")
-    pub service: Option<String>,
-}
 
 /// HTTP controller for system health monitoring endpoints.
 /// 
@@ -79,4 +69,36 @@ impl HealthController {
         let response = HealthService::check_health(req.into_inner()).await;
         Ok(HttpResponse::Ok().json(response))
     }
+}
+
+/// Basic health check endpoint with OpenAPI documentation
+#[utoipa::path(
+    get,
+    path = "/health",
+    params(
+        ("service" = Option<String>, Query, description = "Optional service name to check")
+    ),
+    responses(
+        (status = 200, description = "Health check successful", body = HealthCheckResponseDto),
+        (status = 503, description = "Service unhealthy")
+    ),
+    tag = "health"
+)]
+pub async fn health_check_api(query: web::Query<HealthQuery>) -> Result<impl Responder> {
+    HealthController::health_check(query).await
+}
+
+/// Detailed health check endpoint with OpenAPI documentation
+#[utoipa::path(
+    post,
+    path = "/health-detailed",
+    request_body = HealthCheckRequestDto,
+    responses(
+        (status = 200, description = "Detailed health check completed", body = HealthCheckResponseDto),
+        (status = 503, description = "Service unhealthy")
+    ),
+    tag = "health"
+)]
+pub async fn detailed_health_check_api(req: web::Json<HealthCheckRequestDto>) -> Result<impl Responder> {
+    HealthController::detailed_health_check(req).await
 }
