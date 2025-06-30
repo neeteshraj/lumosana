@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: lumosana-debugger
+  name: transaction-debugger
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: lumosana-debugger
+      app: transaction-debugger
   template:
     metadata:
       labels:
-        app: lumosana-debugger
+        app: transaction-debugger
     spec:
       containers:
       - name: debugger
-        image: lumosana-debugger:latest
+        image: lumosana/transaction-debugger:latest
         ports:
         - containerPort: 8080
         - containerPort: 50051
         envFrom:
         - configMapRef:
-            name: lumosana-debugger-config
+            name: transaction-debugger-config
         livenessProbe:
           httpGet:
             path: /health

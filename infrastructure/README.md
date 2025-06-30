@@ -11,11 +11,21 @@ infrastructure/
 ├── envoy/              # Envoy proxy configuration
 │   └── envoy.yaml
 ├── k8s/                # Kubernetes manifests
-│   ├── configmap.yaml
-│   ├── deployment.yaml
-│   ├── envoy.yaml
-│   ├── jaeger.yaml
-│   └── service.yaml
+│   ├── configmap.yaml          # Transaction debugger configuration
+│   ├── deployment.yaml         # Transaction debugger deployment
+│   ├── service.yaml           # Transaction debugger services
+│   ├── envoy.yaml             # Envoy proxy deployment
+│   ├── jaeger.yaml            # Jaeger tracing deployment and services
+│   ├── prometheus-config.yaml     # Prometheus configuration
+│   ├── prometheus-deployment.yaml # Prometheus deployment
+│   ├── prometheus-service.yaml    # Prometheus services
+│   ├── otel-collector-config.yaml     # OpenTelemetry Collector configuration
+│   ├── otel-collector-deployment.yaml # OpenTelemetry Collector deployment
+│   ├── otel-collector-service.yaml    # OpenTelemetry Collector service
+│   ├── grafana-config.yaml        # Grafana configuration and datasources
+│   ├── grafana-deployment.yaml    # Grafana deployment
+│   ├── grafana-service.yaml       # Grafana services
+│   └── README.md              # Kubernetes deployment guide
 ├── observability/      # Monitoring and observability configs
 │   ├── grafana/
 │   │   ├── dashboards/
@@ -24,8 +34,9 @@ infrastructure/
 │   ├── otel-collector.yml
 │   └── prometheus.yml
 └── scripts/           # Infrastructure automation scripts
-    ├── start-observability.sh
-    └── test-envoy-features.sh
+    ├── deploy-k8s.sh          # Comprehensive Kubernetes deployment script
+    ├── start-observability.sh # Docker Compose stack startup
+    └── test-envoy-features.sh # Envoy feature testing
 ```
 
 ## 🚀 Quick Start
@@ -48,8 +59,26 @@ infrastructure/
 
 1. **Deploy to Kubernetes:**
    ```bash
-   kubectl apply -f infrastructure/k8s/
+   cd infrastructure/scripts
+   ./deploy-k8s.sh
    ```
+
+2. **Deploy to custom namespace:**
+   ```bash
+   ./deploy-k8s.sh -n production
+   ```
+
+3. **Dry run (see what would be deployed):**
+   ```bash
+   ./deploy-k8s.sh --dry-run
+   ```
+
+4. **Delete deployment:**
+   ```bash
+   ./deploy-k8s.sh --delete
+   ```
+
+See `k8s/README.md` for detailed Kubernetes deployment guide.
 
 ## 🌐 Service URLs
 
@@ -111,6 +140,15 @@ The following services expose Prometheus metrics:
 - OpenTelemetry Collector
 
 ## 🛠️ Scripts
+
+### `deploy-k8s.sh`
+Comprehensive Kubernetes deployment script with the following features:
+- Automated dependency management and deployment order
+- Support for custom namespaces and kubectl contexts
+- Dry-run capability for testing
+- Built-in health checks and status monitoring
+- Cleanup and deletion functionality
+- Colored output and detailed logging
 
 ### `start-observability.sh`
 Automated script to start the complete observability stack with health checks.

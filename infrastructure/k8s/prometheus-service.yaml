@@ -1,0 +1,31 @@
+# ---------------------------------------------
+# Prometheus ClusterIP Service (Internal)
+# ---------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  selector:
+    app: prometheus
+---
+# ---------------------------------------------
+# Prometheus LoadBalancer Service (External)
+# ---------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-lb
+spec:
+  type: LoadBalancer
+  ports:
+    - name: http
+      port: 80
+      targetPort: 9090
+  selector:
+    app: prometheus
