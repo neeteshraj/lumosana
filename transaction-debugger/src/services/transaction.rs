@@ -1,3 +1,9 @@
+//! Transaction analysis service for Solana blockchain transaction debugging.
+//! 
+//! This module provides comprehensive transaction analysis capabilities including
+//! instruction parsing, account interaction analysis, fee calculation, and
+//! detailed execution metrics extraction from Solana transactions.
+
 use crate::dtos::{DebugRequestDto, DebugResponseDto, TransactionAnalysisDto, TransactionDetailsDto, InstructionDetailDto};
 use solana_client::rpc_client::RpcClient;
 use solana_transaction_status::{EncodedConfirmedTransactionWithStatusMeta, UiTransactionEncoding, UiInstruction};
@@ -6,9 +12,39 @@ use tracing::{info, error, instrument};
 use std::str::FromStr;
 use tokio::task;
 
+/// Service for analyzing and debugging Solana blockchain transactions.
+/// 
+/// Provides methods to fetch transaction data from Solana RPC endpoints,
+/// parse transaction instructions, analyze account interactions, calculate
+/// fees and compute units, and generate comprehensive debugging reports.
 pub struct TransactionService;
 
 impl TransactionService {
+    /// Analyzes a Solana transaction providing comprehensive debugging information.
+    /// 
+    /// Fetches transaction data from the Solana RPC endpoint, performs detailed
+    /// analysis of instructions, account interactions, and execution metrics.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `request` - Debug request containing transaction signature and RPC URL
+    /// 
+    /// # Returns
+    /// 
+    /// Comprehensive transaction analysis including:
+    /// - Transaction metadata (slot, block time, signatures)
+    /// - Instruction breakdown and program interactions
+    /// - Account balance changes and token movements
+    /// - Execution logs and compute unit consumption
+    /// - Fee analysis and success/failure status
+    /// 
+    /// # Errors
+    /// 
+    /// Returns error string if:
+    /// - Transaction signature is invalid
+    /// - RPC endpoint is unreachable
+    /// - Transaction is not found on chain
+    /// - Transaction data cannot be parsed
     #[instrument]
     pub async fn analyze_transaction(request: DebugRequestDto) -> Result<DebugResponseDto, String> {
         info!("Analyzing transaction: {}", request.signature);
@@ -47,6 +83,18 @@ impl TransactionService {
         Ok(response)
     }
 
+    /// Performs comprehensive analysis of transaction execution and results.
+    /// 
+    /// Analyzes transaction metadata to extract execution status, compute unit
+    /// consumption, fees, account interactions, and program invocations.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Confirmed transaction with metadata from Solana RPC
+    /// 
+    /// # Returns
+    /// 
+    /// Analysis DTO containing execution metrics and interaction details
     fn perform_analysis(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionAnalysisDto {
         let mut analysis = TransactionAnalysisDto::default();
 
@@ -126,6 +174,28 @@ impl TransactionService {
         analysis
     }
 
+    /// Extracts detailed transaction information including instruction breakdown,
+    /// account interactions, and execution metrics.
+    ///
+    /// Parses the transaction to extract:
+    /// - Version and type of message (parsed, raw, etc.)
+    /// - Recent blockhash used in the transaction
+    /// - Count of account keys involved
+    /// - Instruction details including program IDs, types, and accounts used
+    /// - Count of inner instructions if available
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction` - Encoded confirmed transaction with status metadata
+    /// 
+    /// # Returns
+    /// 
+    /// Transaction details DTO containing structured information about the transaction
+    /// fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionDetailsDto;
+    /// 
+    /// # Errors
+    /// 
+    /// Returns error string if transaction data cannot be parsed or is invalid
     fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionDetailsDto {
         let mut details = TransactionDetailsDto {
             version: "legacy".to_string(),

@@ -1,9 +1,38 @@
+//! Response converter utilities for converting between HTTP DTOs and gRPC protobuf messages.
+//! 
+//! This module provides functionality to convert Solana transaction debug responses
+//! from internal DTO format to gRPC protobuf format, ensuring compatibility between
+//! HTTP and gRPC endpoints.
+
 use crate::dtos::DebugResponseDto;
 use crate::grpc::transaction::debugger::*;
 
+/// Converter utility for transforming debug response DTOs to gRPC protobuf messages.
+/// 
+/// This struct provides methods to convert Solana transaction debug data from the internal
+/// DTO representation used by HTTP endpoints to the protobuf message format required
+/// by gRPC endpoints, ensuring both endpoints return identical structured data.
 pub struct ResponseConverter;
 
 impl ResponseConverter {
+    /// Converts a debug response DTO to a gRPC DebugResponse message.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `dto` - The debug response DTO containing transaction analysis and details
+    /// 
+    /// # Returns
+    /// 
+    /// A fully populated gRPC DebugResponse with transaction data, metadata, and analysis
+    /// Converts a debug response DTO to a gRPC DebugResponse message.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `dto` - The debug response DTO containing transaction analysis and details
+    /// 
+    /// # Returns
+    /// 
+    /// A fully populated gRPC DebugResponse with transaction data, metadata, and analysis
     pub fn to_grpc_response(dto: DebugResponseDto) -> DebugResponse {
         let analysis = TransactionAnalysis {
             success: dto.analysis.success,
@@ -50,13 +79,27 @@ impl ResponseConverter {
         }
     }
 
+    /// Converts Solana transaction JSON data to gRPC Transaction message format.
+    /// 
+    /// Extracts and transforms transaction signatures, account keys, instructions,
+    /// and metadata from the raw JSON transaction data into structured gRPC format.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `transaction_value` - Raw JSON transaction data from Solana RPC
+    /// * `slot` - Blockchain slot number where the transaction was processed
+    /// * `block_time` - Unix timestamp when the block was processed
+    /// * `meta` - Optional transaction metadata containing execution details
+    /// 
+    /// # Returns
+    /// 
+    /// A gRPC Transaction message with all available transaction data
     fn convert_transaction_to_grpc(
         transaction_value: &serde_json::Value,
         slot: u64,
         block_time: Option<i64>,
         meta: &Option<solana_transaction_status::UiTransactionStatusMeta>
     ) -> Transaction {
-        // Extract signatures from the transaction object
         let mut signatures = vec![];
         if let Some(tx_obj) = transaction_value.get("transaction") {
             if let Some(sigs) = tx_obj.get("signatures").and_then(|s| s.as_array()) {
@@ -67,14 +110,12 @@ impl ResponseConverter {
             }
         }
 
-        // Extract account keys and instructions from the transaction message
         let mut account_keys = vec![];
         let mut instructions = vec![];
         let mut recent_blockhash = String::new();
 
         if let Some(tx_obj) = transaction_value.get("transaction") {
             if let Some(message) = tx_obj.get("message") {
-                // Extract account keys
                 if let Some(keys) = message.get("accountKeys").and_then(|k| k.as_array()) {
                     account_keys = keys.iter()
                         .filter_map(|key| {
@@ -96,16 +137,12 @@ impl ResponseConverter {
                         .collect();
                 }
 
-                // Extract recent blockhash
                 if let Some(blockhash) = message.get("recentBlockhash").and_then(|b| b.as_str()) {
                     recent_blockhash = blockhash.to_string();
-                }                    // Extract instructions
-                    if let Some(instrs) = message.get("instructions").and_then(|i| i.as_array()) {
+                }                    if let Some(instrs) = message.get("instructions").and_then(|i| i.as_array()) {
                         instructions = instrs.iter()
                             .filter_map(|instr| {
-                                // Prioritize parsed instructions over compiled instructions
                                 if instr.get("parsed").is_some() {
-                                    // Handle parsed instructions
                                     let program = instr.get("program").and_then(|p| p.as_str()).unwrap_or("unknown");
                                     let program_id = instr.get("programId").and_then(|p| p.as_str()).unwrap_or("unknown");
                                     let stack_height = instr.get("stackHeight").and_then(|s| s.as_u64()).unwrap_or(1) as u32;
@@ -128,7 +165,6 @@ impl ResponseConverter {
                                         program: Some(program.to_string()),
                                     })
                                 } else if let Some(program_id) = instr.get("programId").and_then(|p| p.as_str()) {
-                                    // Handle compiled instructions (with programId and data)
                                     let data = instr.get("data").and_then(|d| d.as_str()).unwrap_or("");
                                     let stack_height = instr.get("stackHeight").and_then(|s| s.as_u64()).unwrap_or(1) as u32;
                                     
@@ -173,16 +209,26 @@ impl ResponseConverter {
         }
     }
 
+    /// Converts Solana transaction metadata to gRPC Meta message format.
+    /// 
+    /// Transforms execution metadata including compute units, fees, logs, token balances,
+    /// and inner instructions from Solana's native format to gRPC protobuf structure.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `meta` - Solana transaction metadata containing execution details
+    /// 
+    /// # Returns
+    /// 
+    /// A gRPC Meta message with comprehensive transaction execution information
     fn convert_meta_to_grpc(meta: &solana_transaction_status::UiTransactionStatusMeta) -> Meta {
         use solana_transaction_status::option_serializer::OptionSerializer;
         
-        // Extract compute units consumed
         let compute_units_consumed = match &meta.compute_units_consumed {
             OptionSerializer::Some(units) => *units,
             _ => 0,
         };
 
-        // Extract inner instructions
         let inner_instructions = match &meta.inner_instructions {
             OptionSerializer::Some(inner_instrs) => {
                 inner_instrs.iter().map(|inner| {
@@ -199,7 +245,6 @@ impl ResponseConverter {
                                 (compiled.data.clone(), format!("program_{}", compiled.program_id_index), 1u32, None, None)
                             },
                             solana_transaction_status::UiInstruction::Parsed(parsed) => {
-                                // For parsed instructions, we'll serialize the entire parsed data as JSON
                                 let parsed_instr = Some(ParsedInstruction {
                                     r#type: "parsed".to_string(),
                                     info_json: serde_json::to_string(&parsed).unwrap_or_default(),
@@ -227,13 +272,11 @@ impl ResponseConverter {
             _ => vec![],
         };
 
-        // Extract log messages
         let log_messages = match &meta.log_messages {
             OptionSerializer::Some(logs) => logs.clone(),
             _ => vec![],
         };
 
-        // Extract token balances
         let pre_token_balances = match &meta.pre_token_balances {
             OptionSerializer::Some(balances) => {
                 balances.iter().map(|balance| {
@@ -302,7 +345,7 @@ impl ResponseConverter {
             post_token_balances,
             pre_balances: meta.pre_balances.clone(),
             pre_token_balances,
-            rewards: vec![], // Rewards are typically empty for most transactions
+            rewards: vec![],
             status: Some(Status {
                 ok: if meta.err.is_none() { Some("".to_string()) } else { None },
             }),

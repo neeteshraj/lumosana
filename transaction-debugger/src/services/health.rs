@@ -1,12 +1,35 @@
+//! Health check service for monitoring system and service component status.
+//! 
+//! This module provides comprehensive health monitoring capabilities including
+//! memory usage, disk space, system time validation, and service-specific checks.
+//! Uses the sysinfo crate for cross-platform system resource monitoring.
+
 use crate::dtos::{HealthCheckRequestDto, HealthCheckResponseDto};
 use tracing::{instrument, error, info, warn};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time::timeout;
 use sysinfo::{System, Disks};
 
+/// Service for performing comprehensive system and application health checks.
+/// 
+/// Provides methods to monitor various system resources, validate service
+/// availability, and generate detailed health status reports for monitoring
+/// and alerting systems.
 pub struct HealthService;
 
 impl HealthService {
+    /// Performs health check based on the provided request parameters.
+    /// 
+    /// Routes health check requests to appropriate service-specific or general
+    /// health monitoring functions based on the service parameter in the request.
+    /// 
+    /// # Arguments
+    /// 
+    /// * `request` - Health check request specifying target service or general check
+    /// 
+    /// # Returns
+    /// 
+    /// Health check response containing status, message, and timestamp
     #[instrument]
     pub async fn check_health(request: HealthCheckRequestDto) -> HealthCheckResponseDto {
         match request.service.as_deref() {
@@ -24,6 +47,15 @@ impl HealthService {
         }
     }
 
+    /// Performs comprehensive system health assessment.
+    /// 
+    /// Executes multiple health checks including memory usage, disk space,
+    /// and system time validation. Aggregates results to provide an overall
+    /// system health status.
+    /// 
+    /// # Returns
+    /// 
+    /// Aggregated health status with detailed component check results
     async fn check_general_health() -> HealthCheckResponseDto {
         info!("Performing general health check");
         
@@ -52,6 +84,15 @@ impl HealthService {
         }
     }
 
+    /// Performs health check specific to transaction processing services.
+    /// 
+    /// Validates RPC connectivity, transaction processing capabilities,
+    /// and protobuf message generation functionality to ensure the
+    /// transaction debugging service is fully operational.
+    /// 
+    /// # Returns
+    /// 
+    /// Health status specifically for transaction service components
     async fn check_transaction_service() -> HealthCheckResponseDto {
         info!("Performing transaction service health check");
         
@@ -80,7 +121,14 @@ impl HealthService {
         }
     }
 
-    
+    /// Monitors system memory usage and validates availability.
+    /// 
+    /// Checks available memory against threshold values to ensure
+    /// the system has sufficient memory for optimal operation.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` if memory usage is within acceptable limits, `false` otherwise
     async fn check_memory_usage() -> bool {
         info!("Checking memory usage");
         
@@ -112,6 +160,15 @@ impl HealthService {
         }
     }
     
+    /// Monitors disk space usage across mounted filesystems.
+    /// 
+    /// Checks available disk space, prioritizing the root filesystem,
+    /// and validates that sufficient space is available for continued
+    /// operation and log file generation.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` if disk space is within acceptable limits, `false` otherwise
     async fn check_disk_space() -> bool {
         info!("Checking disk space");
         
@@ -169,6 +226,15 @@ impl HealthService {
         }
     }
     
+    /// Validates system time accuracy and clock synchronization.
+    /// 
+    /// Checks that the system clock is set to a reasonable time value
+    /// within expected bounds to ensure proper timestamp generation
+    /// and time-based operations.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` if system time is within acceptable range, `false` otherwise
     async fn check_system_time() -> bool {
         info!("Checking system time");
         
@@ -217,6 +283,14 @@ impl HealthService {
         }
     }
     
+    /// Tests connectivity to Solana RPC endpoints.
+    /// 
+    /// Attempts to connect to the Solana mainnet RPC endpoint with a timeout
+    /// to verify network connectivity and RPC service availability.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` if RPC endpoint is reachable and responsive, `false` otherwise
     async fn check_rpc_connectivity() -> bool {
         info!("Testing RPC connectivity");
         
@@ -250,10 +324,28 @@ impl HealthService {
         }
     }
     
+    /// Validates transaction processing pipeline functionality.
+    /// 
+    /// Currently returns `true` as a placeholder for future transaction
+    /// processing validation logic. Can be extended to test actual
+    /// transaction analysis capabilities.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` indicating transaction processing is available
     async fn check_transaction_processing() -> bool {
         true 
     }
     
+    /// Tests protobuf message generation and serialization.
+    /// 
+    /// Validates that gRPC protobuf message structures can be instantiated
+    /// correctly, ensuring the protobuf definitions are properly compiled
+    /// and accessible.
+    /// 
+    /// # Returns
+    /// 
+    /// `true` if protobuf generation is functional, `false` otherwise
     async fn check_protobuf_generation() -> bool {
         use crate::grpc::transaction::debugger::DebugRequest;
         
@@ -265,6 +357,14 @@ impl HealthService {
         true 
     }
     
+    /// Generates a current timestamp string for health check responses.
+    /// 
+    /// Creates a Unix timestamp string representing the current system time
+    /// for inclusion in health check response metadata.
+    /// 
+    /// # Returns
+    /// 
+    /// Unix timestamp as a string, or "0" if time cannot be determined
     fn get_timestamp() -> String {
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
