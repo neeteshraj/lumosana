@@ -265,6 +265,108 @@ curl -X POST http://localhost:8080/debug \
   }'
 ```
 
+## 📊 Observability Stack
+
+The project includes a comprehensive observability stack with metrics, tracing, and monitoring.
+
+### Quick Start with Observability
+
+```bash
+# Start the full observability stack
+./scripts/start-observability.sh
+
+# Or manually with docker-compose
+docker-compose up -d
+```
+
+### Services & URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Grafana** | http://localhost:3000 | Dashboards and visualization (admin/admin) |
+| **Prometheus** | http://localhost:9090 | Metrics collection and querying |
+| **Jaeger** | http://localhost:16686 | Distributed tracing and spans |
+| **Transaction Debugger** | http://localhost:8080 | Main application |
+| **API Documentation** | http://localhost:8080/swagger-ui/ | Interactive API docs |
+| **Metrics Endpoint** | http://localhost:8080/metrics | Prometheus metrics |
+| **Envoy Admin** | http://localhost:9901 | Proxy administration |
+
+### 📈 Metrics Available
+
+- **HTTP Request Rate**: Requests per second
+- **Response Time**: 95th percentile latency
+- **HTTP Status Codes**: Distribution of response codes
+- **CPU Usage**: Application CPU utilization
+- **Transaction Analysis**: Business-specific metrics
+- **Active Connections**: Current connection count
+
+### 🔍 Tracing Features
+
+- **Distributed Tracing**: Track requests across services
+- **OpenTelemetry Integration**: Standard observability framework
+- **Jaeger UI**: Visual trace exploration
+- **Span Details**: Method-level performance insights
+
+### 📊 Grafana Dashboards
+
+Pre-configured dashboards include:
+- **Transaction Debugger Overview**: Key application metrics
+- **System Performance**: Resource utilization
+- **HTTP Analytics**: Request patterns and errors
+- **Business Metrics**: Transaction analysis insights
+
+### Configuration Files
+
+```
+observability/
+├── prometheus.yml          # Prometheus configuration
+├── otel-collector.yml      # OpenTelemetry Collector config
+└── grafana/
+    ├── datasources.yml     # Grafana data sources
+    ├── dashboards.yml      # Dashboard provisioning
+    └── dashboards/
+        └── transaction-debugger.json  # Main dashboard
+```
+
+### 🛠️ Custom Metrics
+
+Add custom metrics in your code:
+
+```rust
+use crate::utils::metrics::{inc_transaction_analyses, observe_transaction_analysis_duration};
+
+// Increment counter
+inc_transaction_analyses();
+
+// Record duration
+let start = std::time::Instant::now();
+// ... do work ...
+observe_transaction_analysis_duration(start.elapsed().as_secs_f64());
+```
+
+### 🔧 Environment Variables
+
+```bash
+# OpenTelemetry
+OTEL_SERVICE_NAME=transaction-debugger
+OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+
+# Jaeger
+JAEGER_AGENT_HOST=jaeger
+JAEGER_AGENT_PORT=6831
+
+# Logging
+RUST_LOG=info
+```
+
+### 📝 Monitoring Best Practices
+
+1. **Set up alerts** in Grafana for critical metrics
+2. **Monitor error rates** and response times
+3. **Use distributed tracing** to debug performance issues
+4. **Track business metrics** alongside technical metrics
+5. **Regular dashboard reviews** to identify trends
+
 ## Contributing
 
 1. Fork the repository

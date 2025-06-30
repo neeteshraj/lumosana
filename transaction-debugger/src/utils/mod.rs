@@ -6,3 +6,4 @@ pub mod protobuf;
 pub mod time;
 pub mod transaction;
 pub mod tracing;
+pub mod metrics;

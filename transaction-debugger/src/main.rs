@@ -17,6 +17,7 @@ use std::env;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     utils::tracing::init_tracing();
+    utils::metrics::init_metrics();
     
     println!("Starting Transaction Debugger Service");
 
