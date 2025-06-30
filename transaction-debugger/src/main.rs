@@ -1,5 +1,4 @@
 mod api;
-mod debugger;
 mod grpc;
 mod models;
 mod tracing;

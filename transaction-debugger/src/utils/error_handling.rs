@@ -1,6 +1,7 @@
 // Error handling utilities
 use std::fmt;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum AppError {
     ValidationError(String),
@@ -24,4 +25,5 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
+#[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;

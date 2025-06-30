@@ -52,7 +52,7 @@ impl ResponseConverter {
     }
 
     fn convert_transaction_to_grpc(
-        transaction_value: &serde_json::Value,
+        _transaction_value: &serde_json::Value,
         slot: u64,
         block_time: Option<i64>,
         meta: &Option<solana_transaction_status::UiTransactionStatusMeta>

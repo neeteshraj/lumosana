@@ -1,7 +1,9 @@
 // Validation utilities
 
+#[allow(dead_code)]
 pub struct Validator;
 
+#[allow(dead_code)]
 impl Validator {
     // Validate Solana transaction signature format
     pub fn is_valid_signature(signature: &str) -> bool {
