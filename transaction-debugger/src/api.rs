@@ -1,7 +1,13 @@
-use actix_web::{web, post, HttpResponse, Responder, Result};
+use actix_web::{web, post, get,HttpResponse, Responder, Result};
 use crate::debugger::analyze_transaction;
 use crate::models::DebugRequest;
 use tracing::instrument;
+
+#[get("/health")]
+#[instrument]
+pub async fn health_check() -> &'static str {
+    "OK"
+}
 
 #[post("/debug")]
 #[instrument]
