@@ -22,7 +22,8 @@ pub struct DebugResponseDto {
     pub block_time: Option<i64>,
     /// Raw transaction data
     pub transaction: serde_json::Value,
-    /// Transaction metadata
+    /// Transaction metadata as JSON object
+    #[schema(value_type = Object)]
     pub meta: Option<solana_transaction_status::UiTransactionStatusMeta>,
     /// Transaction analysis results
     pub analysis: TransactionAnalysisDto,

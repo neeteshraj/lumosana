@@ -1,14 +1,19 @@
 use actix_web::web;
 use crate::controllers::health::{health_check_api, detailed_health_check_api};
 use crate::controllers::transaction::debug_transaction_api;
-use crate::dtos::{DebugRequestDto, DebugResponseDto, HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery};
+use crate::dtos::{DebugRequestDto, DebugResponseDto, HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery, TransactionDetailsDto, InstructionDetailDto, TransactionAnalysisDto};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(OpenApi)]
 #[openapi(
+    paths(
+        crate::controllers::transaction::debug_transaction_api,
+        crate::controllers::health::health_check_api,
+        crate::controllers::health::detailed_health_check_api
+    ),
     components(
-        schemas(DebugRequestDto, DebugResponseDto, HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery)
+        schemas(DebugRequestDto, DebugResponseDto, HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery, TransactionDetailsDto, InstructionDetailDto, TransactionAnalysisDto)
     ),
     tags(
         (name = "transaction", description = "Solana transaction debugging and analysis"),
@@ -20,7 +25,7 @@ use utoipa_swagger_ui::SwaggerUi;
         description = "A comprehensive API for analyzing and debugging Solana transactions",
         contact(
             name = "Solana Transaction Debugger",
-            email = "support@luosana.com"
+            email = "support@lumosana.com"
         )
     ),
     servers(

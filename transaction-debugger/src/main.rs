@@ -8,6 +8,7 @@ mod dtos;
 mod utils;
 
 use actix_web::{App, HttpServer, middleware::Logger};
+use actix_cors::Cors;
 use tonic::transport::Server;
 use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
 use grpc::health::debugger::health_check_server::HealthCheckServer;
@@ -39,6 +40,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let http_server = HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header()
+            )
             .configure(api::config)
     })
     .bind(&http_addr)?
