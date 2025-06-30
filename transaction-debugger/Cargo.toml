@@ -3,12 +3,19 @@ name = "transaction-debugger"
 version = "0.1.0"
 edition = "2021"
 
+# Library target for IDE support
+[lib]
+name = "transaction_debugger"
+path = "src/lib.rs"
+
+# Binary target
 [[bin]]
 name = "main"
 path = "src/main.rs"
 
 [dependencies]
 actix-web = "4"
+actix-cors = "0.6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tokio = { version = "1", features = ["full"] }
@@ -19,6 +26,12 @@ solana-transaction-status = "1.18"
 solana-sdk = "1.18"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+reqwest = { version = "0.11", features = ["json"] }
+sysinfo = "0.30"
+utoipa = { version = "4.0", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "4.0", features = ["actix-web"] }
+prometheus = "0.13"
+actix-web-prometheus = "0.1"
 
 [build-dependencies]
 tonic-build = "0.10"

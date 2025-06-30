@@ -1,56 +1,60 @@
-mod api;
-mod debugger;
+mod routes;
 mod grpc;
 mod models;
-mod tracing;
+mod controllers;
+mod services;
+mod dtos;
+mod utils;
 
-use actix_web::{web, App, HttpServer, middleware::Logger};
+use actix_web::{App, HttpServer, middleware::Logger};
+use actix_cors::Cors;
 use tonic::transport::Server;
-use grpc::debugger::transaction_debugger_server::TransactionDebuggerServer;
-use grpc::DebuggerService;
+use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
+use grpc::health::debugger::health_check_server::HealthCheckServer;
+use grpc::{TransactionDebuggerService, HealthCheckService};
 use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize tracing
-    tracing::init_tracing();
+    utils::tracing::init_tracing();
+    utils::metrics::init_metrics();
     
     println!("Starting Transaction Debugger Service");
 
     let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
     let http_port = env::var("HTTP_PORT").unwrap_or_else(|_| "8080".to_string());
 
-    // Start gRPC server
     let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse()?;
-    let debugger_service = DebuggerService;
+    let transaction_service = TransactionDebuggerService;
+    let health_service = HealthCheckService;
     
     println!("Starting gRPC server on {}", grpc_addr);
     let grpc_server = Server::builder()
-        .add_service(TransactionDebuggerServer::new(debugger_service))
+        .add_service(TransactionDebuggerServer::new(transaction_service))
+        .add_service(HealthCheckServer::new(health_service))
         .serve(grpc_addr);
 
-    // Start HTTP server
     let http_addr = format!("0.0.0.0:{}", http_port);
     println!("Starting HTTP server on {}", http_addr);
     
     let http_server = HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
-            .configure(api::config)
-            .route("/health", web::get().to(health_check))
+            .wrap(
+                Cors::default()
+                    .allow_any_origin()
+                    .allow_any_method()
+                    .allow_any_header()
+            )
+            .configure(routes::api::config)
     })
     .bind(&http_addr)?
     .run();
 
-    // Run both servers concurrently
     tokio::try_join!(
         async { grpc_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) },
         async { http_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) }
     )?;
 
     Ok(())
-}
-
-async fn health_check() -> &'static str {
-    "OK"
 }

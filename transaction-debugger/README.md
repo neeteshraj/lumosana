@@ -1,6 +1,8 @@
-# Solana Transaction Debugger
+# Lumosana - Solana Transaction Debugger
 
-A comprehensive Rust-based service for analyzing and debugging Solana blockchain transactions. This service provides both HTTP REST API and gRPC interfaces with distributed tracing capabilities.
+A comprehensive Rust-based service for analyzing and debugging Solana blockchain transactions. This service provides both HTTP REST API and gRPC interfaces with complete observability and infrastructure automation.
+
+> **Note**: This is the core application. For infrastructure setup and deployment, see the [`infrastructure/`](../infrastructure/) directory.
 
 ## Features
 
@@ -14,9 +16,14 @@ A comprehensive Rust-based service for analyzing and debugging Solana blockchain
   - Log message extraction
 
 - **Multiple Interfaces**:
-  - REST HTTP API
+  - REST HTTP API with OpenAPI/Swagger documentation
   - gRPC API
   - Health check endpoint
+
+- **API Documentation**:
+  - Interactive Swagger UI
+  - OpenAPI 3.0 specification
+  - Comprehensive schema documentation
 
 - **Observability**:
   - Distributed tracing with Jaeger
@@ -28,6 +35,15 @@ A comprehensive Rust-based service for analyzing and debugging Solana blockchain
   - Docker containerized
   - Envoy proxy integration
   - ConfigMap configuration
+
+## API Documentation
+
+The service provides comprehensive API documentation through Swagger UI:
+
+- **Swagger UI**: http://localhost:8080/swagger-ui/
+- **OpenAPI JSON**: http://localhost:8080/api-docs/openapi.json
+
+The Swagger UI provides an interactive interface to explore and test all API endpoints with detailed schema documentation.
 
 ## API Endpoints
 
@@ -97,12 +113,12 @@ curl -X POST http://localhost:8080/debug \
 
 1. **Build the Docker image**:
 ```bash
-docker build -t transaction-debugger .
+docker build -t lumosana .
 ```
 
 2. **Run the container**:
 ```bash
-docker run -p 8080:8080 -p 50051:50051 transaction-debugger
+docker run -p 8080:8080 -p 50051:50051 lumosana
 ```
 
 ### Kubernetes Deployment
@@ -210,11 +226,15 @@ Access Jaeger UI at `http://jaeger-ui-service/` when deployed in Kubernetes.
 transaction-debugger/
 ├── src/
 │   ├── main.rs           # Application entry point
-│   ├── api.rs            # HTTP REST API handlers
-│   ├── grpc.rs           # gRPC service implementation
-│   ├── debugger.rs       # Core transaction analysis logic
-│   ├── models.rs         # Data models and structures
-│   └── tracing.rs        # Observability setup
+│   ├── routes/           # HTTP REST API routes and handlers
+│   │   └── api.rs        # API configuration and routing
+│   ├── grpc/             # gRPC service implementation
+│   ├── controllers/      # HTTP request handlers
+│   ├── services/         # Business logic services
+│   ├── dtos/             # Data transfer objects
+│   ├── models/           # Domain models and structures
+│   └── utils/            # Utility functions and helpers
+│       └── tracing.rs    # Observability and logging setup
 ├── proto/
 │   └── debugger.proto    # gRPC service definition
 ├── k8s/                  # Kubernetes manifests
@@ -225,9 +245,9 @@ transaction-debugger/
 
 ### Adding New Features
 
-1. **New Analysis Features**: Add logic to `debugger.rs` and update `TransactionAnalysis` in `models.rs`
-2. **New API Endpoints**: Add handlers to `api.rs`
-3. **New gRPC Methods**: Update `proto/debugger.proto` and implement in `grpc.rs`
+1. **New Analysis Features**: Add logic to services and update models
+2. **New API Endpoints**: Add handlers to controllers and update `routes/api.rs`
+3. **New gRPC Methods**: Update `proto/debugger.proto` and implement in `grpc/`
 
 ### Testing
 
@@ -246,6 +266,108 @@ curl -X POST http://localhost:8080/debug \
     "rpc_url": "https://api.mainnet-beta.solana.com"
   }'
 ```
+
+## 📊 Observability Stack
+
+The project includes a comprehensive observability stack with metrics, tracing, and monitoring.
+
+### Quick Start with Observability
+
+```bash
+# Start the full observability stack
+./scripts/start-observability.sh
+
+# Or manually with docker-compose
+docker-compose up -d
+```
+
+### Services & URLs
+
+| Service | URL | Purpose |
+|---------|-----|---------|
+| **Grafana** | http://localhost:3000 | Dashboards and visualization (admin/admin) |
+| **Prometheus** | http://localhost:9090 | Metrics collection and querying |
+| **Jaeger** | http://localhost:16686 | Distributed tracing and spans |
+| **Transaction Debugger** | http://localhost:8080 | Main application |
+| **API Documentation** | http://localhost:8080/swagger-ui/ | Interactive API docs |
+| **Metrics Endpoint** | http://localhost:8080/metrics | Prometheus metrics |
+| **Envoy Admin** | http://localhost:9901 | Proxy administration |
+
+### 📈 Metrics Available
+
+- **HTTP Request Rate**: Requests per second
+- **Response Time**: 95th percentile latency
+- **HTTP Status Codes**: Distribution of response codes
+- **CPU Usage**: Application CPU utilization
+- **Transaction Analysis**: Business-specific metrics
+- **Active Connections**: Current connection count
+
+### 🔍 Tracing Features
+
+- **Distributed Tracing**: Track requests across services
+- **OpenTelemetry Integration**: Standard observability framework
+- **Jaeger UI**: Visual trace exploration
+- **Span Details**: Method-level performance insights
+
+### 📊 Grafana Dashboards
+
+Pre-configured dashboards include:
+- **Transaction Debugger Overview**: Key application metrics
+- **System Performance**: Resource utilization
+- **HTTP Analytics**: Request patterns and errors
+- **Business Metrics**: Transaction analysis insights
+
+### Configuration Files
+
+```
+observability/
+├── prometheus.yml          # Prometheus configuration
+├── otel-collector.yml      # OpenTelemetry Collector config
+└── grafana/
+    ├── datasources.yml     # Grafana data sources
+    ├── dashboards.yml      # Dashboard provisioning
+    └── dashboards/
+        └── transaction-debugger.json  # Main dashboard
+```
+
+### 🛠️ Custom Metrics
+
+Add custom metrics in your code:
+
+```rust
+use crate::utils::metrics::{inc_transaction_analyses, observe_transaction_analysis_duration};
+
+// Increment counter
+inc_transaction_analyses();
+
+// Record duration
+let start = std::time::Instant::now();
+// ... do work ...
+observe_transaction_analysis_duration(start.elapsed().as_secs_f64());
+```
+
+### 🔧 Environment Variables
+
+```bash
+# OpenTelemetry
+OTEL_SERVICE_NAME=transaction-debugger
+OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+
+# Jaeger
+JAEGER_AGENT_HOST=jaeger
+JAEGER_AGENT_PORT=6831
+
+# Logging
+RUST_LOG=info
+```
+
+### 📝 Monitoring Best Practices
+
+1. **Set up alerts** in Grafana for critical metrics
+2. **Monitor error rates** and response times
+3. **Use distributed tracing** to debug performance issues
+4. **Track business metrics** alongside technical metrics
+5. **Regular dashboard reviews** to identify trends
 
 ## Contributing
 

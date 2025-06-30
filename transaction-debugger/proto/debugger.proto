@@ -6,17 +6,55 @@ service TransactionDebugger {
   rpc DebugTransaction (DebugRequest) returns (DebugResponse);
 }
 
+service HealthCheck {
+  rpc Check (HealthCheckRequest) returns (HealthCheckResponse);
+}
+
 message DebugRequest {
   string signature = 1;
   string rpc_url = 2;
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;
+  }
+  ServingStatus status = 1;
 }
 
 message DebugResponse {
   string signature = 1;
   uint64 slot = 2;
   optional int64 block_time = 3;
-  string transaction_json = 4;  // Raw transaction data as JSON string
-  TransactionAnalysis analysis = 5;
+  Transaction transaction = 4;
+  optional Meta meta = 5; 
+  TransactionAnalysis analysis = 6;
+  optional TransactionDetails transaction_details = 7;
+}
+
+message TransactionDetails {
+  string version = 1;
+  optional string recent_blockhash = 2;
+  repeated string signatures = 3;
+  string message_type = 4;
+  uint32 account_keys_count = 5;
+  repeated InstructionDetail instruction_details = 6;
+  uint32 inner_instructions_count = 7;
+}
+
+message InstructionDetail {
+  string program_id = 1;
+  optional string program_name = 2;
+  string instruction_type = 3;
+  repeated string accounts_used = 4;
+  uint32 data_length = 5;
 }
 
 message TransactionAnalysis {
@@ -30,4 +68,81 @@ message TransactionAnalysis {
   repeated uint64 pre_balances = 8;
   repeated uint64 post_balances = 9;
   repeated string log_messages = 10;
+}
+
+message Transaction {
+  int64 blockTime = 1;
+  Meta meta = 2;
+  uint64 slot = 3;
+  TransactionData transaction = 4;
+}
+
+message TransactionData {
+  TransactionMessage message = 1;
+  repeated string signatures = 2;
+}
+
+message TransactionMessage {
+  repeated AccountKey accountKeys = 1;
+  repeated TransactionInstruction instructions = 2;
+  string recentBlockhash = 3;
+}
+
+message AccountKey {
+  string pubkey = 1;
+  bool signer = 2;
+  string source = 3;
+  bool writable = 4;
+}
+
+message TransactionInstruction {
+  repeated string accounts = 1;
+  string data = 2;
+  string programId = 3;
+  uint32 stackHeight = 4;
+  optional ParsedInstruction parsed = 5;
+  optional string program = 6;
+}
+
+message ParsedInstruction {
+  string type = 1;
+  string info_json = 2;
+}
+
+message Meta {
+  uint64 computeUnitsConsumed = 1;
+  optional string err = 2;
+  uint64 fee = 3;
+  repeated InnerInstruction innerInstructions = 4;
+  repeated string logMessages = 5;
+  repeated uint64 postBalances = 6;
+  repeated TokenBalance postTokenBalances = 7;
+  repeated uint64 preBalances = 8;
+  repeated TokenBalance preTokenBalances = 9;
+  repeated string rewards = 10;
+  Status status = 11;
+}
+
+message InnerInstruction {
+  uint32 index = 1;
+  repeated TransactionInstruction instructions = 2;
+}
+
+message TokenBalance {
+  uint32 accountIndex = 1;
+  string mint = 2;
+  string owner = 3;
+  string programId = 4;
+  UiTokenAmount uiTokenAmount = 5;
+}
+
+message UiTokenAmount {
+  string amount = 1;
+  uint32 decimals = 2;
+  double uiAmount = 3;
+  string uiAmountString = 4;
+}
+
+message Status {
+  optional string Ok = 1;
 }

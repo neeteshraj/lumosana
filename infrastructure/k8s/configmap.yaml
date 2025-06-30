@@ -9,3 +9,6 @@ data:
   JAEGER_SERVICE_NAME: "transaction-debugger"
   JAEGER_AGENT_HOST: "jaeger"
   JAEGER_AGENT_PORT: "6831"
+  OTEL_EXPORTER_JAEGER_ENDPOINT: "http://jaeger:14268/api/traces"
+  OTEL_SERVICE_NAME: "transaction-debugger"
+  OTEL_RESOURCE_ATTRIBUTES: "service.name=transaction-debugger,service.version=1.0.0"

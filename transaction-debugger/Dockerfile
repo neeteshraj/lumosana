@@ -1,5 +1,8 @@
 # Build stage
-FROM rust:1.77 as builder
+FROM rust:latest as builder
+
+# Install protobuf compiler
+RUN apt-get update && apt-get install -y protobuf-compiler && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -7,10 +10,10 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock build.rs ./
 COPY proto/ ./proto/
 
-# Create a dummy main.rs to build dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+# Create a dummy main.rs and lib.rs to build dependencies
+RUN mkdir src && echo "fn main() {}" > src/main.rs && echo "" > src/lib.rs
 RUN cargo build --release
-RUN rm src/main.rs
+RUN rm src/main.rs src/lib.rs
 
 # Copy source code and rebuild
 COPY src/ ./src/

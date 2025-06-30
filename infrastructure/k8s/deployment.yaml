@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: debugger
-        image: transaction-debugger:latest
+        image: lumosana/transaction-debugger:latest
         ports:
         - containerPort: 8080
         - containerPort: 50051
