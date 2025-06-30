@@ -3,5 +3,6 @@ use crate::controllers::{HealthController, TransactionController};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.route("/debug", web::post().to(TransactionController::debug_transaction))
-        .route("/health-detailed", web::post().to(HealthController::detailed_health_check));
+        .route("/health-detailed", web::post().to(HealthController::detailed_health_check))
+        .route("/health", web::get().to(HealthController::health_check));
 }

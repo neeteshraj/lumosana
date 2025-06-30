@@ -41,7 +41,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         App::new()
             .wrap(Logger::default())
             .configure(api::config)
-            .route("/health", web::get().to(HealthController::health_check))
     })
     .bind(&http_addr)?
     .run();
