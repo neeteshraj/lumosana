@@ -18,6 +18,7 @@ spec:
         ports:
         - containerPort: 16686
         - containerPort: 14268
+        - containerPort: 14269
         - containerPort: 6831
           protocol: UDP
         env:
@@ -37,6 +38,9 @@ spec:
   - name: collector
     port: 14268
     targetPort: 14268
+  - name: metrics
+    port: 14269
+    targetPort: 14269
   - name: agent
     port: 6831
     targetPort: 6831
