@@ -1,6 +1,6 @@
 static_resources:
   listeners:
-  - name: listener_0
+  - name: http_listener
     address:
       socket_address:
         address: 0.0.0.0

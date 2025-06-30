@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Solana Transaction Debugger - Observability Stack Startup Script
+# Lumosana - Observability Stack Startup Script
 
 set -e
 
-echo "🚀 Starting Solana Transaction Debugger with full observability stack..."
+echo "🚀 Starting Lumosana with full observability stack..."
 
 # Check if Docker and Docker Compose are available
 if ! command -v docker &> /dev/null; then
@@ -17,15 +17,18 @@ if ! command -v docker-compose &> /dev/null; then
     exit 1
 fi
 
+# Change to the docker directory
+cd "$(dirname "$0")/../docker"
+
 # Create necessary directories
 echo "📁 Creating necessary directories..."
-mkdir -p ./observability/grafana/dashboards
+mkdir -p ../observability/grafana/dashboards
 
 # Start the observability stack
 echo "🔧 Starting observability stack..."
 docker-compose up -d
 
-# Wait for services to be ready
+# Wait for services to start...
 echo "⏳ Waiting for services to start..."
 sleep 10
 
@@ -60,9 +63,10 @@ echo "🌐 Service URLs:"
 echo "  📊 Grafana Dashboard:      http://localhost:3000 (admin/admin)"
 echo "  📈 Prometheus:             http://localhost:9090"
 echo "  🔍 Jaeger Tracing:         http://localhost:16686"
-echo "  📋 Transaction Debugger:   http://localhost:8080"
+echo "  📋 Lumosana Debugger:      http://localhost:8080"
 echo "  📖 API Documentation:      http://localhost:8080/swagger-ui/"
 echo "  📊 Metrics Endpoint:       http://localhost:8080/metrics"
+echo "  🔧 Envoy Proxy:            http://localhost:10000"
 echo "  🔧 Envoy Admin:            http://localhost:9901"
 echo ""
 echo "🔧 To stop all services:"

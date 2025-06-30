@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   transaction-debugger:
-    build: .
+    build: ../../transaction-debugger
     ports:
       - "8080:8080"
       - "50051:50051"
@@ -17,7 +15,7 @@ services:
       - jaeger
       - prometheus
     networks:
-      - debugger-network
+      - lumosana-network
 
   # Jaeger for distributed tracing
   jaeger:
@@ -32,7 +30,7 @@ services:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
       - COLLECTOR_OTLP_ENABLED=true
     networks:
-      - debugger-network
+      - lumosana-network
 
   # Prometheus for metrics collection
   prometheus:
@@ -40,7 +38,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ../observability/prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -49,7 +47,7 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--web.enable-lifecycle'
     networks:
-      - debugger-network
+      - lumosana-network
 
   # Grafana for visualization
   grafana:
@@ -60,15 +58,15 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
-      - ./observability/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-      - ./observability/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - ../observability/grafana/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+      - ../observability/grafana/dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
+      - ../observability/grafana/dashboards:/var/lib/grafana/dashboards
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
       - jaeger
     networks:
-      - debugger-network
+      - lumosana-network
 
   # OpenTelemetry Collector
   otel-collector:
@@ -80,32 +78,32 @@ services:
       - "8889:8889"   # Prometheus exporter metrics
       - "13133:13133" # Health check
     volumes:
-      - ./observability/otel-collector.yml:/etc/otel-collector-config.yml
+      - ../observability/otel-collector.yml:/etc/otel-collector-config.yml
     command: ["--config=/etc/otel-collector-config.yml"]
     depends_on:
       - jaeger
       - prometheus
     networks:
-      - debugger-network
+      - lumosana-network
 
   # Envoy proxy for load balancing and observability
   envoy:
     image: envoyproxy/envoy:v1.28-latest
     ports:
-      - "10000:10000"  # Envoy admin
+      - "10000:10000"  # Envoy proxy
       - "9901:9901"    # Envoy admin interface
     volumes:
-      - ./envoy.yaml:/etc/envoy/envoy.yaml
+      - ../envoy/envoy.yaml:/etc/envoy/envoy.yaml
     depends_on:
       - transaction-debugger
       - otel-collector
     networks:
-      - debugger-network
+      - lumosana-network
 
 volumes:
   prometheus_data:
   grafana_data:
 
 networks:
-  debugger-network:
+  lumosana-network:
     driver: bridge

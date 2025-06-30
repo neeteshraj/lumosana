@@ -5,8 +5,8 @@ set -e
 ENVOY_ADMIN="http://localhost:9901"
 ENVOY_PROXY="http://localhost:10000"
 
-echo "🚀 Testing All Envoy Features"
-echo "=================================="
+echo "🚀 Testing All Envoy Features for Lumosana"
+echo "============================================"
 
 # Test 1: Basic Admin Interface
 echo "📊 1. Testing Admin Interface..."

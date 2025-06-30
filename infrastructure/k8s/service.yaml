@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: transaction-debugger-service
+  name: lumosana-debugger-service
   labels:
     app: transaction-debugger
 spec:

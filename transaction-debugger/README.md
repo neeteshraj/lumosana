@@ -1,6 +1,8 @@
-# Solana Transaction Debugger
+# Lumosana - Solana Transaction Debugger
 
-A comprehensive Rust-based service for analyzing and debugging Solana blockchain transactions. This service provides both HTTP REST API and gRPC interfaces with distributed tracing capabilities.
+A comprehensive Rust-based service for analyzing and debugging Solana blockchain transactions. This service provides both HTTP REST API and gRPC interfaces with complete observability and infrastructure automation.
+
+> **Note**: This is the core application. For infrastructure setup and deployment, see the [`infrastructure/`](../infrastructure/) directory.
 
 ## Features
 
@@ -111,12 +113,12 @@ curl -X POST http://localhost:8080/debug \
 
 1. **Build the Docker image**:
 ```bash
-docker build -t transaction-debugger .
+docker build -t lumosana .
 ```
 
 2. **Run the container**:
 ```bash
-docker run -p 8080:8080 -p 50051:50051 transaction-debugger
+docker run -p 8080:8080 -p 50051:50051 lumosana
 ```
 
 ### Kubernetes Deployment

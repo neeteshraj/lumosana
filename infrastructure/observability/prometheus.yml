@@ -12,7 +12,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # Transaction Debugger Service
+  # Lumosana Debugger Service
   - job_name: 'transaction-debugger'
     static_configs:
       - targets: ['transaction-debugger:8080']

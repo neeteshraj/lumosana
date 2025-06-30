@@ -8,6 +8,7 @@ if [ $? -eq 0 ]; then
     echo "HTTP API will be available on http://localhost:8080"
     echo "gRPC API will be available on localhost:50051"
     echo "Health check: http://localhost:8080/health"
+    echo "Swagger UI: http://localhost:8080/swagger-ui/"
     echo ""
     echo "Press Ctrl+C to stop the service"
     echo ""
