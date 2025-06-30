@@ -1,28 +1,7 @@
-use actix_web::{web, post, get,HttpResponse, Responder, Result};
-use crate::debugger::analyze_transaction;
-use crate::models::DebugRequest;
-use tracing::instrument;
-
-#[get("/health")]
-#[instrument]
-pub async fn health_check() -> &'static str {
-    "OK"
-}
-
-#[post("/debug")]
-#[instrument]
-pub async fn debug_tx(req: web::Json<DebugRequest>) -> Result<impl Responder> {
-    match analyze_transaction(&req.signature, &req.rpc_url).await {
-        Ok(response) => {
-            Ok(HttpResponse::Ok().json(response))
-        },
-        Err(e) => Ok(HttpResponse::InternalServerError().json(serde_json::json!({
-            "error": e,
-            "message": "Failed to analyze transaction"
-        }))),
-    }
-}
+use actix_web::{web};
+use crate::controllers::{HealthController, TransactionController};
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(debug_tx);
+    cfg.route("/debug", web::post().to(TransactionController::debug_transaction))
+        .route("/health-detailed", web::post().to(HealthController::detailed_health_check));
 }
