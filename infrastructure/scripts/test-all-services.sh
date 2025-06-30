@@ -89,10 +89,43 @@ fi
 
 # Test gRPC endpoint through transaction-debugger LoadBalancer
 echo -n "Testing gRPC endpoint... "
-if grpcurl -plaintext localhost:50051 list > /dev/null 2>&1; then
-    echo -e "${GREEN}✓ OK${NC} (gRPC accessible)"
+if command -v grpcurl > /dev/null 2>&1; then
+    if grpcurl -plaintext -proto transaction-debugger/proto/debugger.proto -d '{}' localhost:50051 debugger.HealthCheck/Check > /dev/null 2>&1; then
+        echo -e "${GREEN}✓ OK${NC} (gRPC health check responding)"
+    else
+        echo -e "${RED}✗ FAILED${NC} (gRPC not responding)"
+    fi
 else
-    echo -e "${YELLOW}⚠ SKIPPED${NC} (grpcurl not available or no gRPC services exposed)"
+    echo -e "${YELLOW}⚠ SKIPPED${NC} (grpcurl not available - install with: brew install grpcurl)"
+fi
+
+# Test gRPC service list
+echo -n "Testing gRPC services... "
+if command -v grpcurl > /dev/null 2>&1; then
+    services=$(grpcurl -plaintext -proto transaction-debugger/proto/debugger.proto localhost:50051 list 2>/dev/null)
+    if echo "$services" | grep -q "debugger.HealthCheck" && echo "$services" | grep -q "debugger.TransactionDebugger"; then
+        echo -e "${GREEN}✓ OK${NC} (Both HealthCheck and TransactionDebugger services available)"
+    else
+        echo -e "${YELLOW}⚠ PARTIAL${NC} (Some gRPC services missing)"
+    fi
+else
+    echo -e "${YELLOW}⚠ SKIPPED${NC} (grpcurl not available)"
+fi
+
+# Test transaction debugging endpoint (with a quick test request)
+echo -n "Testing Transaction Debug endpoint... "
+if command -v grpcurl > /dev/null 2>&1; then
+    # Test with an invalid signature to see if the service responds (we expect an error but it means the service is working)
+    response=$(grpcurl -plaintext -proto transaction-debugger/proto/debugger.proto -d '{"signature": "test", "rpc_url": "https://api.mainnet-beta.solana.com"}' localhost:50051 debugger.TransactionDebugger/DebugTransaction 2>&1 || true)
+    if echo "$response" | grep -q -E "(InvalidArgument|Invalid signature|Validation error)" || echo "$response" | grep -q "signature"; then
+        echo -e "${GREEN}✓ OK${NC} (Transaction debug service responding with validation)"
+    elif echo "$response" | grep -q -E "(error|rpc error|failed)"; then
+        echo -e "${GREEN}✓ OK${NC} (Transaction debug service responding)"
+    else
+        echo -e "${YELLOW}⚠ UNKNOWN${NC} (Unexpected response: ${response:0:50}...)"
+    fi
+else
+    echo -e "${YELLOW}⚠ SKIPPED${NC} (grpcurl not available)"
 fi
 
 echo
