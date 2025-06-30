@@ -1,3 +1,4 @@
+use crate::models::transaction::{InstructionDetail, TransactionAnalysis, TransactionDetails};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -64,6 +65,49 @@ impl Default for TransactionAnalysisDto {
             pre_balances: Vec::new(),
             post_balances: Vec::new(),
             log_messages: Vec::new(),
+        }
+    }
+}
+
+impl From<TransactionAnalysis> for TransactionAnalysisDto {
+    fn from(analysis: TransactionAnalysis) -> Self {
+        Self {
+            success: analysis.success,
+            error: analysis.error,
+            compute_units_consumed: analysis.compute_units_consumed,
+            fee: analysis.fee,
+            accounts_involved: analysis.accounts_involved,
+            program_ids: analysis.program_ids,
+            instruction_count: analysis.instruction_count,
+            pre_balances: analysis.pre_balances,
+            post_balances: analysis.post_balances,
+            log_messages: analysis.log_messages,
+        }
+    }
+}
+
+impl From<TransactionDetails> for TransactionDetailsDto {
+    fn from(details: TransactionDetails) -> Self {
+        Self {
+            version: details.version,
+            recent_blockhash: details.recent_blockhash,
+            signatures: details.signatures,
+            message_type: details.message_type,
+            account_keys_count: details.account_keys_count,
+            instruction_details: details.instruction_details.into_iter().map(Into::into).collect(),
+            inner_instructions_count: details.inner_instructions_count,
+        }
+    }
+}
+
+impl From<InstructionDetail> for InstructionDetailDto {
+    fn from(detail: InstructionDetail) -> Self {
+        Self {
+            program_id: detail.program_id,
+            program_name: detail.program_name,
+            instruction_type: detail.instruction_type,
+            accounts_used: detail.accounts_used,
+            data_length: detail.data_length,
         }
     }
 }

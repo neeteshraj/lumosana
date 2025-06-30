@@ -2,6 +2,11 @@ use serde::{Deserialize, Serialize};
 use solana_transaction_status::UiTransactionStatusMeta;
 
 #[derive(Debug, Deserialize, Serialize)]
+pub struct Request {
+    pub transaction: String,
+}
+
+#[derive(Debug, Deserialize, Serialize)]
 pub struct DebugRequest {
     pub signature: String,
     pub rpc_url: String,
