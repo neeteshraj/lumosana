@@ -1,6 +1,20 @@
 # Lumosana Infrastructure
 
+🎉 **Status: Successfully Deployed and Running!**
+
 This directory contains all infrastructure-related configurations and scripts for the Lumosana project.
+
+## ✅ Current Status
+
+All services are deployed and running successfully in Kubernetes:
+- ✅ Transaction Debugger (HTTP + gRPC)
+- ✅ Envoy Proxy (routing and load balancing)
+- ✅ Jaeger (distributed tracing)
+- ✅ Prometheus (metrics collection)
+- ✅ Grafana (visualization)
+- ✅ OpenTelemetry Collector (telemetry aggregation)
+
+**Quick Test**: Run `./scripts/test-all-services.sh` to verify all endpoints.
 
 ## 📁 Directory Structure
 

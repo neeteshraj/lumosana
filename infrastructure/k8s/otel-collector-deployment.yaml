@@ -25,7 +25,7 @@ spec:
         - name: config-volume
           mountPath: /etc/otel-collector-config.yml
           subPath: otel-collector.yml
-        command: ["--config=/etc/otel-collector-config.yml"]
+        args: ["--config=/etc/otel-collector-config.yml"]
         resources:
           requests:
             memory: "128Mi"

@@ -15,6 +15,7 @@ spec:
       containers:
       - name: debugger
         image: lumosana/transaction-debugger:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8080
         - containerPort: 50051
