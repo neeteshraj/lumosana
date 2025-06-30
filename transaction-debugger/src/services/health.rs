@@ -94,7 +94,6 @@ impl HealthService {
         if total_memory > 0 {
             let memory_usage_percent = (used_memory as f64 / total_memory as f64) * 100.0;
             
-            // Convert bytes to MB for logging
             let total_mb = total_memory / 1024 / 1024;
             let used_mb = used_memory / 1024 / 1024;
             let free_mb = free_memory / 1024 / 1024;
@@ -102,7 +101,6 @@ impl HealthService {
             info!("Memory usage: {:.1}% ({} MB used, {} MB free, {} MB total)", 
                   memory_usage_percent, used_mb, free_mb, total_mb);
             
-            // Consider memory healthy if usage is below 90%
             let is_healthy = memory_usage_percent < 90.0;
             if !is_healthy {
                 warn!("High memory usage detected: {:.1}%", memory_usage_percent);
@@ -110,7 +108,7 @@ impl HealthService {
             is_healthy
         } else {
             warn!("Could not determine memory usage");
-            true // Default to healthy if we can't determine usage
+            true
         }
     }
     
@@ -119,7 +117,6 @@ impl HealthService {
         
         let disks = Disks::new_with_refreshed_list();
         
-        // Look for the root disk or the disk with the largest capacity
         let mut root_disk = None;
         let mut largest_capacity = 0;
         
@@ -127,13 +124,11 @@ impl HealthService {
             let mount_point = disk.mount_point().to_string_lossy();
             let total_space = disk.total_space();
             
-            // Prefer root filesystem
             if mount_point == "/" {
                 root_disk = Some(disk);
                 break;
             }
             
-            // Otherwise, track the largest disk
             if total_space > largest_capacity {
                 largest_capacity = total_space;
                 root_disk = Some(disk);
@@ -148,7 +143,6 @@ impl HealthService {
             if total_space > 0 {
                 let used_percent = (used_space as f64 / total_space as f64) * 100.0;
                 
-                // Convert bytes to human-readable format
                 let total_gb = total_space as f64 / (1024.0 * 1024.0 * 1024.0);
                 let used_gb = used_space as f64 / (1024.0 * 1024.0 * 1024.0);
                 let available_gb = available_space as f64 / (1024.0 * 1024.0 * 1024.0);
@@ -160,7 +154,6 @@ impl HealthService {
                       used_gb,
                       available_gb);
                 
-                // Consider disk healthy if usage is below 85%
                 let is_healthy = used_percent < 85.0;
                 if !is_healthy {
                     warn!("High disk usage detected: {:.1}%", used_percent);
@@ -168,11 +161,11 @@ impl HealthService {
                 is_healthy
             } else {
                 warn!("Could not determine disk usage - total space is 0");
-                true // Default to healthy if we can't determine usage
+                true 
             }
         } else {
             warn!("No disks found for health check");
-            true // Default to healthy if no disks found
+            true 
         }
     }
     
@@ -184,9 +177,8 @@ impl HealthService {
                 let timestamp = duration.as_secs();
                 let current_year = 1970 + (timestamp / (365 * 24 * 3600));
                 
-                // Check if timestamp is reasonable (between 2020 and 2035)
-                let min_timestamp = 1_577_836_800; // Jan 1, 2020
-                let max_timestamp = 2_051_222_400; // Jan 1, 2035
+                let min_timestamp = 1_577_836_800;
+                let max_timestamp = 2_051_222_400;
                 
                 let is_time_valid = timestamp > min_timestamp && timestamp < max_timestamp;
                 
@@ -201,8 +193,6 @@ impl HealthService {
                     }
                 }
                 
-                // Additional check: verify system time is not drifting too much
-                // by checking if we can get a consistent time reading
                 let second_reading = SystemTime::now().duration_since(UNIX_EPOCH);
                 match second_reading {
                     Ok(second_duration) => {
