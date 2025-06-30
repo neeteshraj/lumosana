@@ -4,7 +4,6 @@ use crate::dtos::DebugRequestDto;
 use crate::grpc::converters::ResponseConverter;
 use tracing::instrument;
 
-// Include the generated protobuf code
 pub mod debugger {
     tonic::include_proto!("debugger");
 }

@@ -7,12 +7,11 @@ mod services;
 mod dtos;
 mod utils;
 
-use actix_web::{web, App, HttpServer, middleware::Logger};
+use actix_web::{App, HttpServer, middleware::Logger};
 use tonic::transport::Server;
 use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
 use grpc::health::debugger::health_check_server::HealthCheckServer;
 use grpc::{TransactionDebuggerService, HealthCheckService};
-use controllers::HealthController;
 use std::env;
 
 #[tokio::main]

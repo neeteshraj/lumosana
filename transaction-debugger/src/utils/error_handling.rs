@@ -1,4 +1,3 @@
-// Error handling utilities
 use std::fmt;
 
 #[allow(dead_code)]

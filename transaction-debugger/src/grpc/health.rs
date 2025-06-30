@@ -3,7 +3,6 @@ use crate::services::HealthService;
 use crate::dtos::HealthCheckRequestDto;
 use tracing::instrument;
 
-// Include the generated protobuf code
 pub mod debugger {
     tonic::include_proto!("debugger");
 }

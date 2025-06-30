@@ -3,6 +3,12 @@ name = "transaction-debugger"
 version = "0.1.0"
 edition = "2021"
 
+# Library target for IDE support
+[lib]
+name = "transaction_debugger"
+path = "src/lib.rs"
+
+# Binary target
 [[bin]]
 name = "main"
 path = "src/main.rs"

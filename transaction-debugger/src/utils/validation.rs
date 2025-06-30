@@ -1,5 +1,3 @@
-// Validation utilities
-
 #[allow(dead_code)]
 pub struct Validator;
 
