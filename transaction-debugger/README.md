@@ -224,11 +224,15 @@ Access Jaeger UI at `http://jaeger-ui-service/` when deployed in Kubernetes.
 transaction-debugger/
 ├── src/
 │   ├── main.rs           # Application entry point
-│   ├── api.rs            # HTTP REST API handlers
-│   ├── grpc.rs           # gRPC service implementation
-│   ├── debugger.rs       # Core transaction analysis logic
-│   ├── models.rs         # Data models and structures
-│   └── tracing.rs        # Observability setup
+│   ├── routes/           # HTTP REST API routes and handlers
+│   │   └── api.rs        # API configuration and routing
+│   ├── grpc/             # gRPC service implementation
+│   ├── controllers/      # HTTP request handlers
+│   ├── services/         # Business logic services
+│   ├── dtos/             # Data transfer objects
+│   ├── models/           # Domain models and structures
+│   └── utils/            # Utility functions and helpers
+│       └── tracing.rs    # Observability and logging setup
 ├── proto/
 │   └── debugger.proto    # gRPC service definition
 ├── k8s/                  # Kubernetes manifests
@@ -239,9 +243,9 @@ transaction-debugger/
 
 ### Adding New Features
 
-1. **New Analysis Features**: Add logic to `debugger.rs` and update `TransactionAnalysis` in `models.rs`
-2. **New API Endpoints**: Add handlers to `api.rs`
-3. **New gRPC Methods**: Update `proto/debugger.proto` and implement in `grpc.rs`
+1. **New Analysis Features**: Add logic to services and update models
+2. **New API Endpoints**: Add handlers to controllers and update `routes/api.rs`
+3. **New gRPC Methods**: Update `proto/debugger.proto` and implement in `grpc/`
 
 ### Testing
 

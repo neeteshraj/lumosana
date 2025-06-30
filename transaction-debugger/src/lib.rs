@@ -1,7 +1,6 @@
-pub mod api;
+pub mod routes;
 pub mod grpc;
 pub mod models;
-pub mod tracing;
 pub mod controllers;
 pub mod services;
 pub mod dtos;

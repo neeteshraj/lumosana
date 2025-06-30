@@ -1,7 +1,6 @@
-mod api;
+mod routes;
 mod grpc;
 mod models;
-mod tracing;
 mod controllers;
 mod services;
 mod dtos;
@@ -17,7 +16,7 @@ use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing::init_tracing();
+    utils::tracing::init_tracing();
     
     println!("Starting Transaction Debugger Service");
 
@@ -46,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     .allow_any_method()
                     .allow_any_header()
             )
-            .configure(api::config)
+            .configure(routes::api::config)
     })
     .bind(&http_addr)?
     .run();
