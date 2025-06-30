@@ -36,7 +36,7 @@ message DebugResponse {
   Transaction transaction = 4;
   optional Meta meta = 5; 
   TransactionAnalysis analysis = 6;
-  TransactionDetails transaction_details = 7;
+  optional TransactionDetails transaction_details = 7;
 }
 
 message TransactionDetails {

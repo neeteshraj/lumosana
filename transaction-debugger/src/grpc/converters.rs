@@ -6,6 +6,7 @@
 
 use crate::dtos::DebugResponseDto;
 use crate::grpc::transaction::debugger::*;
+use tracing::{debug, info};
 
 /// Converter utility for transforming debug response DTOs to gRPC protobuf messages.
 /// 
@@ -34,6 +35,8 @@ impl ResponseConverter {
     /// 
     /// A fully populated gRPC DebugResponse with transaction data, metadata, and analysis
     pub fn to_grpc_response(dto: DebugResponseDto) -> DebugResponse {
+        debug!("Converting DTO to gRPC response, transaction_details: {:?}", dto.transaction_details);
+        
         let analysis = TransactionAnalysis {
             success: dto.analysis.success,
             error: dto.analysis.error,
@@ -68,7 +71,9 @@ impl ResponseConverter {
             inner_instructions_count: dto.transaction_details.inner_instructions_count as u32,
         };
 
-        DebugResponse {
+        debug!(?transaction_details, "Converted transaction details");
+
+        let response = DebugResponse {
             signature: dto.signature,
             slot: dto.slot,
             block_time: dto.block_time,
@@ -76,7 +81,10 @@ impl ResponseConverter {
             meta: dto.meta.as_ref().map(|m| Self::convert_meta_to_grpc(m)),
             analysis: Some(analysis),
             transaction_details: Some(transaction_details),
-        }
+        };
+        
+        info!("gRPC response created with transaction_details field: {}", response.transaction_details.is_some());
+        response
     }
 
     /// Converts Solana transaction JSON data to gRPC Transaction message format.
