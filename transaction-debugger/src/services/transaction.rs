@@ -5,6 +5,9 @@
 //! detailed execution metrics extraction from Solana transactions.
 
 use crate::dtos::{DebugRequestDto, DebugResponseDto, TransactionAnalysisDto, TransactionDetailsDto, InstructionDetailDto};
+use crate::utils::error_handling::{AppError, AppResult};
+use crate::utils::validation::Validator;
+use crate::services::ValidationService;
 use solana_client::rpc_client::RpcClient;
 use solana_transaction_status::{EncodedConfirmedTransactionWithStatusMeta, UiTransactionEncoding, UiInstruction};
 use solana_sdk::signature::Signature;
@@ -46,8 +49,11 @@ impl TransactionService {
     /// - Transaction is not found on chain
     /// - Transaction data cannot be parsed
     #[instrument]
-    pub async fn analyze_transaction(request: DebugRequestDto) -> Result<DebugResponseDto, String> {
+    pub async fn analyze_transaction(request: DebugRequestDto) -> AppResult<DebugResponseDto> {
         info!("Analyzing transaction: {}", request.signature);
+        
+        // Validate input
+        Validator::validate_debug_request(&request.signature, &request.rpc_url)?;
         
         let sig_str = request.signature.clone();
         let rpc_url_str = request.rpc_url.clone();
@@ -56,15 +62,15 @@ impl TransactionService {
             let client = RpcClient::new(rpc_url_str);
             
             let signature = Signature::from_str(&sig_str)
-                .map_err(|e| format!("Invalid signature format: {}", e))?;
+                .map_err(|e| AppError::ValidationError(format!("Invalid signature format: {}", e)))?;
             
             client
                 .get_transaction(&signature, UiTransactionEncoding::JsonParsed)
                 .map_err(|e| {
                     error!("Failed to fetch transaction: {}", e);
-                    format!("Failed to fetch transaction: {}", e)
+                    AppError::RpcError(format!("Failed to fetch transaction: {}", e))
                 })
-        }).await.map_err(|e| format!("Task join error: {}", e))??;
+        }).await.map_err(|e| AppError::InternalError(format!("Task join error: {}", e)))??;
 
         let analysis = Self::perform_analysis(&transaction);
         let transaction_details = Self::extract_transaction_details(&transaction);
@@ -78,6 +84,9 @@ impl TransactionService {
             analysis,
             transaction_details,
         };
+
+        // Validate the response before returning
+        ValidationService::validate_debug_response(&response)?;
 
         info!("Transaction analysis completed for: {}", request.signature);
         Ok(response)
@@ -132,14 +141,18 @@ impl TransactionService {
                         analysis.instruction_count = parsed_message.instructions.len();
                         
                         for account in &parsed_message.account_keys {
-                            analysis.accounts_involved.push(account.pubkey.clone());
+                            // Only add valid public keys to the analysis
+                            if Validator::is_valid_pubkey(&account.pubkey) {
+                                analysis.accounts_involved.push(account.pubkey.clone());
+                            }
                         }
 
                         for instruction in &parsed_message.instructions {
                             if let UiInstruction::Compiled(compiled_instruction) = instruction {
                                 if let Some(account) = parsed_message.account_keys.get(compiled_instruction.program_id_index as usize) {
                                     let program_id = &account.pubkey;
-                                    if !analysis.program_ids.contains(program_id) {
+                                    // Only add valid program IDs
+                                    if Validator::is_valid_pubkey(program_id) && !analysis.program_ids.contains(program_id) {
                                         analysis.program_ids.push(program_id.clone());
                                     }
                                 }
@@ -148,12 +161,19 @@ impl TransactionService {
                     },
                     solana_transaction_status::UiMessage::Raw(raw_message) => {
                         analysis.instruction_count = raw_message.instructions.len();
-                        analysis.accounts_involved = raw_message.account_keys.clone();
+                        
+                        // Filter and validate account keys
+                        analysis.accounts_involved = raw_message.account_keys
+                            .iter()
+                            .filter(|key| Validator::is_valid_pubkey(key))
+                            .cloned()
+                            .collect();
 
                         for instruction in &raw_message.instructions {
                             let program_id_index = instruction.program_id_index;
                             if let Some(program_id) = raw_message.account_keys.get(program_id_index as usize) {
-                                if !analysis.program_ids.contains(program_id) {
+                                // Only add valid program IDs
+                                if Validator::is_valid_pubkey(program_id) && !analysis.program_ids.contains(program_id) {
                                     analysis.program_ids.push(program_id.clone());
                                 }
                             }
@@ -171,7 +191,19 @@ impl TransactionService {
         analysis.program_ids.sort();
         analysis.program_ids.dedup();
 
+        // Final validation of collected data
+        Self::validate_analysis_data(&mut analysis);
+
         analysis
+    }
+
+    /// Validates the collected analysis data and removes any invalid entries
+    fn validate_analysis_data(analysis: &mut TransactionAnalysisDto) {
+        // Validate and filter accounts involved
+        analysis.accounts_involved.retain(|account| Validator::is_valid_pubkey(account));
+        
+        // Validate and filter program IDs
+        analysis.program_ids.retain(|program_id| Validator::is_valid_pubkey(program_id));
     }
 
     /// Extracts detailed transaction information including instruction breakdown,
@@ -191,7 +223,7 @@ impl TransactionService {
     /// # Returns
     /// 
     /// Transaction details DTO containing structured information about the transaction
-    /// fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta) -> TransactionDetailsDto;
+    /// fn extract_transaction_details(transaction: &EncodedConfirmedTransactionWithStatusMeta);
     /// 
     /// # Errors
     /// 
@@ -242,14 +274,18 @@ impl TransactionService {
                                         .map(|acc| acc.pubkey.clone())
                                         .unwrap_or_else(|| format!("Unknown-{}", compiled_inst.program_id_index));
                                     
+                                    // Only include valid accounts in the accounts_used list
+                                    let accounts_used: Vec<String> = compiled_inst.accounts.iter()
+                                        .filter_map(|&idx| parsed_message.account_keys.get(idx as usize))
+                                        .map(|acc| acc.pubkey.clone())
+                                        .filter(|account| Validator::is_valid_pubkey(account))
+                                        .collect();
+                                    
                                     InstructionDetailDto {
                                         program_id,
                                         program_name: None,
                                         instruction_type: "compiled".to_string(),
-                                        accounts_used: compiled_inst.accounts.iter()
-                                            .filter_map(|&idx| parsed_message.account_keys.get(idx as usize))
-                                            .map(|acc| acc.pubkey.clone())
-                                            .collect(),
+                                        accounts_used,
                                         data_length: compiled_inst.data.len(),
                                     }
                                 }
@@ -267,14 +303,18 @@ impl TransactionService {
                                 .cloned()
                                 .unwrap_or_else(|| format!("Unknown-{}", instruction.program_id_index));
                             
+                            // Only include valid accounts in the accounts_used list
+                            let accounts_used: Vec<String> = instruction.accounts.iter()
+                                .filter_map(|&idx| raw_message.account_keys.get(idx as usize))
+                                .cloned()
+                                .filter(|account| Validator::is_valid_pubkey(account))
+                                .collect();
+                            
                             let instruction_detail = InstructionDetailDto {
                                 program_id,
                                 program_name: None,
                                 instruction_type: "raw".to_string(),
-                                accounts_used: instruction.accounts.iter()
-                                    .filter_map(|&idx| raw_message.account_keys.get(idx as usize))
-                                    .cloned()
-                                    .collect(),
+                                accounts_used,
                                 data_length: instruction.data.len(),
                             };
                             details.instruction_details.push(instruction_detail);

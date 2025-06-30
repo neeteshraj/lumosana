@@ -24,5 +24,24 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
+// From implementations for common error types
+impl From<reqwest::Error> for AppError {
+    fn from(err: reqwest::Error) -> Self {
+        AppError::NetworkError(err.to_string())
+    }
+}
+
+impl From<serde_json::Error> for AppError {
+    fn from(err: serde_json::Error) -> Self {
+        AppError::InternalError(format!("JSON serialization error: {}", err))
+    }
+}
+
+impl From<tokio::task::JoinError> for AppError {
+    fn from(err: tokio::task::JoinError) -> Self {
+        AppError::InternalError(format!("Task join error: {}", err))
+    }
+}
+
 #[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;

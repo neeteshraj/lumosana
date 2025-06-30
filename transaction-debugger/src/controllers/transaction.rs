@@ -6,6 +6,8 @@
 use actix_web::{web, HttpResponse, Responder, Result};
 use crate::services::TransactionService;
 use crate::dtos::DebugRequestDto;
+use crate::utils::error_handling::AppError;
+use crate::utils::validation::Validator;
 use tracing::instrument;
 
 /// HTTP controller for Solana transaction debugging and analysis.
@@ -51,14 +53,41 @@ impl TransactionController {
     /// ```
     #[instrument]
     pub async fn debug_transaction(req: web::Json<DebugRequestDto>) -> Result<impl Responder> {
-        match TransactionService::analyze_transaction(req.into_inner()).await {
+        let request = req.into_inner();
+        
+        // Early validation
+        if let Err(e) = Validator::validate_debug_request(&request.signature, &request.rpc_url) {
+            let error_response = serde_json::json!({
+                "error": "validation_error",
+                "message": e.to_string()
+            });
+            return Ok(HttpResponse::BadRequest().json(error_response));
+        }
+        
+        match TransactionService::analyze_transaction(request).await {
             Ok(response) => {
                 Ok(HttpResponse::Ok().json(response))
             },
-            Err(e) => Ok(HttpResponse::InternalServerError().json(serde_json::json!({
-                "error": e,
-                "message": "Failed to analyze transaction"
-            }))),
+            Err(e) => {
+                let error_response = serde_json::json!({
+                    "error": match e {
+                        AppError::ValidationError(_) => "validation_error",
+                        AppError::NetworkError(_) => "network_error",
+                        AppError::TransactionNotFound(_) => "transaction_not_found",
+                        AppError::RpcError(_) => "rpc_error",
+                        AppError::InternalError(_) => "internal_error",
+                    },
+                    "message": e.to_string()
+                });
+                
+                match e {
+                    AppError::ValidationError(_) => Ok(HttpResponse::BadRequest().json(error_response)),
+                    AppError::NetworkError(_) => Ok(HttpResponse::ServiceUnavailable().json(error_response)),
+                    AppError::TransactionNotFound(_) => Ok(HttpResponse::NotFound().json(error_response)),
+                    AppError::RpcError(_) => Ok(HttpResponse::ServiceUnavailable().json(error_response)),
+                    AppError::InternalError(_) => Ok(HttpResponse::InternalServerError().json(error_response)),
+                }
+            },
         }
     }
 }

@@ -29,5 +29,5 @@ pub async fn check_transaction_processing() -> bool {
 
     let analysis_dto = TransactionAnalysisDto::from(mock_analysis);
 
-    !analysis_dto.success
+    analysis_dto.success
 }
