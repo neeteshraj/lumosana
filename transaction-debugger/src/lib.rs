@@ -5,6 +5,7 @@ pub mod controllers;
 pub mod services;
 pub mod dtos;
 pub mod utils;
+pub mod config;
 
 pub use grpc::converters::ResponseConverter;
 pub use grpc::{TransactionDebuggerService, HealthCheckService};

@@ -4,16 +4,21 @@ services:
     ports:
       - "8080:8080"
       - "50051:50051"
+    env_file:
+      - ../../transaction-debugger/.env
     environment:
-      - RUST_LOG=info
+      # Override specific variables for Docker environment
       - JAEGER_AGENT_HOST=jaeger
       - JAEGER_AGENT_PORT=6831
       - OTEL_EXPORTER_JAEGER_ENDPOINT=http://jaeger:14268/api/traces
-      - OTEL_SERVICE_NAME=transaction-debugger
-      - OTEL_RESOURCE_ATTRIBUTES=service.name=transaction-debugger,service.version=1.0.0
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://otel-collector:4317
+      - PROMETHEUS_ENDPOINT=prometheus:9090
     depends_on:
       - jaeger
       - prometheus
+      - otel-collector
     networks:
       - lumosana-network
 

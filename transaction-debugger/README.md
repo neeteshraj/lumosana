@@ -142,16 +142,72 @@ kubectl apply -f k8s/envoy.yaml
 
 ## Configuration
 
-The service can be configured using environment variables:
+The Transaction Debugger uses a comprehensive configuration system that supports multiple environments and deployment scenarios.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `HTTP_PORT` | `8080` | HTTP server port |
-| `GRPC_PORT` | `50051` | gRPC server port |
-| `RUST_LOG` | `info` | Log level |
-| `JAEGER_SERVICE_NAME` | `transaction-debugger` | Service name for tracing |
-| `JAEGER_AGENT_HOST` | `localhost` | Jaeger agent hostname |
-| `JAEGER_AGENT_PORT` | `6831` | Jaeger agent port |
+### Environment Files
+
+- **`.env`** - Active configuration (auto-generated, don't commit)
+- **`.env.example`** - Template with all available options
+- **`.env.development`** - Development environment configuration
+- **`.env.production`** - Production environment configuration
+
+### Quick Setup
+
+1. **Copy the example configuration:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **Or use environment-specific configuration:**
+   ```bash
+   # For development
+   cp .env.development .env
+   
+   # For production
+   cp .env.production .env
+   ```
+
+3. **Validate your configuration:**
+   ```bash
+   ./scripts/validate-config.sh
+   ```
+
+### Key Configuration Sections
+
+| Section | Description |
+|---------|-------------|
+| **App** | Application name, version, environment |
+| **Server** | HTTP/gRPC ports and host configuration |
+| **Logging** | Log levels and formatting |
+| **Observability** | Metrics, tracing, and monitoring |
+| **Jaeger** | Distributed tracing configuration |
+| **OpenTelemetry** | OTEL collector and exporter settings |
+| **Prometheus** | Metrics collection configuration |
+| **Solana** | RPC endpoints and timeouts |
+| **Security** | CORS and API security settings |
+
+### Startup Scripts
+
+Use the provided startup script for easy environment management:
+
+```bash
+# Start with development configuration
+./scripts/start.sh
+
+# Start with production configuration  
+./scripts/start.sh --env production
+
+# Clean build and start
+./scripts/start.sh --clean
+
+# Show configuration and exit
+./scripts/start.sh --show-config
+
+# Start with Docker
+./scripts/start.sh --env docker
+```
+
+For detailed configuration documentation, see [`config/README.md`](config/README.md).
 
 ## Response Format
 

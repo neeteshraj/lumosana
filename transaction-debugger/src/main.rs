@@ -5,26 +5,76 @@ mod controllers;
 mod services;
 mod dtos;
 mod utils;
+mod config;
 
-use actix_web::{App, HttpServer, middleware::Logger};
+use actix_web::{App, HttpServer, middleware::Logger, web};
 use actix_cors::Cors;
 use tonic::transport::Server;
 use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
 use grpc::health::debugger::health_check_server::HealthCheckServer;
 use grpc::{TransactionDebuggerService, HealthCheckService};
+use config::Config;
 use std::env;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Check for command-line arguments first
+    let args: Vec<String> = env::args().collect();
+    
+    // Load configuration
+    let config = Config::from_env()
+        .map_err(|e| format!("Failed to load configuration: {}", e))?;
+    
+    // Validate configuration
+    config.validate()
+        .map_err(|e| format!("Configuration validation failed: {}", e))?;
+
+    // Handle special command-line operations
+    if args.len() > 1 {
+        match args[1].as_str() {
+            "--print-detailed" => {
+                config.print_detailed();
+                return Ok(());
+            }
+            "--save-config" => {
+                if args.len() < 3 {
+                    eprintln!("Error: --save-config requires a file path");
+                    eprintln!("Usage: {} --save-config <file_path>", args[0]);
+                    std::process::exit(1);
+                }
+                config.save_to_file(&args[2])?;
+                return Ok(());
+            }
+            "--help" => {
+                println!("Transaction Debugger");
+                println!("Usage: {} [OPTIONS]", args[0]);
+                println!("\nOptions:");
+                println!("  --print-detailed    Print detailed configuration in JSON format");
+                println!("  --save-config FILE  Save configuration to specified file");
+                println!("  --help             Show this help message");
+                println!("\nWithout options, starts the full server.");
+                return Ok(());
+            }
+            "--version" => {
+                println!("{} v{}", config.app.name, config.app.version);
+                return Ok(());
+            }
+            _ => {
+                // Ignore unknown arguments and continue with normal startup
+            }
+        }
+    }
+    
+    // Print configuration summary for normal startup
+    config.print_summary();
+
+    // Initialize tracing and metrics with config
     utils::tracing::init_tracing();
     utils::metrics::init_metrics();
     
     println!("Starting Transaction Debugger Service");
 
-    let grpc_port = env::var("GRPC_PORT").unwrap_or_else(|_| "50051".to_string());
-    let http_port = env::var("HTTP_PORT").unwrap_or_else(|_| "8080".to_string());
-
-    let grpc_addr = format!("0.0.0.0:{}", grpc_port).parse()?;
+    let grpc_addr = format!("{}:{}", config.server.host, config.server.grpc_port).parse()?;
     let transaction_service = TransactionDebuggerService;
     let health_service = HealthCheckService;
     
@@ -34,18 +84,42 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_service(HealthCheckServer::new(health_service))
         .serve(grpc_addr);
 
-    let http_addr = format!("0.0.0.0:{}", http_port);
+    let http_addr = format!("{}:{}", config.server.host, config.server.http_port);
     println!("Starting HTTP server on {}", http_addr);
     
-    let http_server = HttpServer::new(|| {
+    // Clone CORS configuration to avoid lifetime issues
+    let cors_origins = config.security.cors_allowed_origins.clone();
+    let cors_methods = config.security.cors_allowed_methods.clone();
+    let cors_headers = config.security.cors_allowed_headers.clone();
+    
+    let http_server = HttpServer::new(move || {
+        let mut cors = Cors::default();
+        
+        // Configure CORS based on settings
+        let origins: Vec<&str> = cors_origins.split(',').collect();
+        let methods: Vec<&str> = cors_methods.split(',').collect();
+        let headers: Vec<&str> = cors_headers.split(',').collect();
+        
+        if origins.contains(&"*") {
+            cors = cors.allow_any_origin();
+        } else {
+            for origin in &origins {
+                cors = cors.allowed_origin(origin.trim());
+            }
+        }
+        
+        if methods.contains(&"*") {
+            cors = cors.allow_any_method();
+        }
+        
+        if headers.contains(&"*") {
+            cors = cors.allow_any_header();
+        }
+
         App::new()
+            .app_data(web::Data::new(std::sync::Arc::new(config.clone())))
             .wrap(Logger::default())
-            .wrap(
-                Cors::default()
-                    .allow_any_origin()
-                    .allow_any_method()
-                    .allow_any_header()
-            )
+            .wrap(cors)
             .configure(routes::api::config)
     })
     .bind(&http_addr)?
