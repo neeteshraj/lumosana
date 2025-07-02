@@ -128,8 +128,17 @@ impl std::error::Error for ConfigError {}
 
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
-        if let Err(_) = dotenvy::dotenv() {
-            println!("Warning: .env file not found, using environment variables only");
+        // Try to load environment-specific .env file first, then fallback to .env
+        let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
+        let env_file = format!(".env.{}", environment);
+        
+        // Try to load environment-specific file first
+        if let Ok(_) = dotenvy::from_filename(&env_file) {
+            println!("Loaded environment configuration from: {}", env_file);
+        } else if let Ok(_) = dotenvy::dotenv() {
+            println!("Loaded environment configuration from: .env");
+        } else {
+            println!("Warning: No .env file found (tried {} and .env), using environment variables only", env_file);
         }
 
         Ok(Config {

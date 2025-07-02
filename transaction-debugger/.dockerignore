@@ -65,10 +65,13 @@ docker-compose*.yml
 .docker/
 .dockerignore
 
-# Environment files
-.env*
+# Environment files (excluding production configs)
+# IMPORTANT: .env.docker and .env.example are needed for Docker validation
+.env.development
+.env.production
 local.env
 dev.env
+# DO NOT exclude .env.docker and .env.example - needed for Docker builds
 
 # Logs
 logs/
@@ -102,7 +105,7 @@ k8s/
 !Cargo.toml
 
 # Scripts (exclude deployment scripts from image)
-scripts/
+# scripts/ - COMMENTED OUT: scripts needed for validation during Docker build
 
 # Examples (usually not needed in production image)
 examples/
@@ -128,3 +131,7 @@ dev.*
 # tests/
 # **/*test.rs
 # **/*tests.rs
+
+# Important: DO NOT ignore these files as they're needed for Docker validation
+# .env*
+# scripts/
