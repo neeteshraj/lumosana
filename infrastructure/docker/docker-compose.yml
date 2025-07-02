@@ -1,3 +1,5 @@
+name: lumosana
+
 services:
   transaction-debugger:
     build: ../../transaction-debugger
