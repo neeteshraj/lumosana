@@ -7,3 +7,4 @@ pub mod time;
 pub mod transaction;
 pub mod tracing;
 pub mod metrics;
+pub mod telemetry;

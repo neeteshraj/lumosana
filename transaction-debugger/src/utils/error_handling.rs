@@ -24,6 +24,18 @@ impl fmt::Display for AppError {
 
 impl std::error::Error for AppError {}
 
+impl AppError {
+    pub fn variant_name(&self) -> &'static str {
+        match self {
+            AppError::ValidationError(_) => "validation_error",
+            AppError::NetworkError(_) => "network_error",
+            AppError::TransactionNotFound(_) => "transaction_not_found",
+            AppError::RpcError(_) => "rpc_error",
+            AppError::InternalError(_) => "internal_error",
+        }
+    }
+}
+
 // From implementations for common error types
 impl From<reqwest::Error> for AppError {
     fn from(err: reqwest::Error) -> Self {

@@ -5,7 +5,7 @@ receivers:
         endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-  
+
   prometheus:
     config:
       scrape_configs:
@@ -23,9 +23,9 @@ extensions:
 processors:
   batch:
     timeout: 1s
-    send_batch_size: 1024
-    send_batch_max_size: 2048
-  
+    send_batch_size: 512
+    send_batch_max_size: 1024
+
   memory_limiter:
     limit_mib: 512
     check_interval: 1s
@@ -33,21 +33,13 @@ processors:
   resource:
     attributes:
       - key: environment
-        value: "development"
+        value: "production"
+        action: insert
+      - key: service.name
+        value: "transaction-debugger"
         action: insert
 
 exporters:
-  # OTLP exporter for Jaeger (traces)
-  otlp/jaeger:
-    endpoint: jaeger:14250
-    tls:
-      insecure: true
-
-  # Prometheus for metrics
-  prometheus:
-    endpoint: "0.0.0.0:8889"
-
-  # Debug for logging/debugging
   debug:
     verbosity: detailed
 
@@ -55,15 +47,16 @@ service:
   pipelines:
     traces:
       receivers: [otlp]
-      processors: [memory_limiter, resource, batch]
-      exporters: [otlp/jaeger, debug]
-    
+      exporters: [debug]
     metrics:
-      receivers: [otlp, prometheus]
-      processors: [memory_limiter, resource, batch]
-      exporters: [prometheus, debug]
+      receivers: [otlp]
+      exporters: [debug]
+    logs:
+      receivers: [otlp]
+      exporters: [debug]
 
   extensions: [health_check, pprof]
+
   telemetry:
     logs:
       level: "debug"
