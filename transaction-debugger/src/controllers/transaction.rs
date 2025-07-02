@@ -5,7 +5,7 @@
 
 use actix_web::{web, HttpResponse, Responder, Result};
 use crate::services::TransactionService;
-use crate::dtos::DebugRequestDto;
+use crate::dtos::transaction::{DebugRequestDto, DebugResponseDto};
 use crate::utils::error_handling::AppError;
 use crate::utils::validation::Validator;
 use tracing::instrument;

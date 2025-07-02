@@ -5,8 +5,8 @@
 
 use actix_web::{web, HttpResponse, Responder, Result};
 use crate::services::HealthService;
-use crate::dtos::{HealthCheckRequestDto, HealthQuery};
 use tracing::instrument;
+use crate::dtos::{HealthCheckResponseDto, HealthQuery, HealthCheckRequestDto};
 
 /// HTTP controller for system health monitoring endpoints.
 /// 

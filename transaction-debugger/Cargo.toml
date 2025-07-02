@@ -3,37 +3,34 @@ name = "transaction-debugger"
 version = "0.1.0"
 edition = "2021"
 
-# Library target for IDE support
 [lib]
 name = "transaction_debugger"
 path = "src/lib.rs"
 
-# Binary target
 [[bin]]
 name = "main"
 path = "src/main.rs"
 
 [dependencies]
-actix-web = "4"
-actix-cors = "0.6"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-tokio = { version = "1", features = ["full"] }
-tonic = { version = "0.10", features = ["transport"] }
-prost = "0.12"
-solana-client = "1.18"
-solana-transaction-status = "1.18"
-solana-sdk = "1.18"
-tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
-reqwest = { version = "0.11", features = ["json"] }
-sysinfo = "0.30"
-utoipa = { version = "4.0", features = ["actix_extras"] }
-utoipa-swagger-ui = { version = "4.0", features = ["actix-web"] }
-prometheus = "0.13"
-actix-web-prometheus = "0.1"
-dotenvy = "0.15"
+actix-web = "4.11.0"
+actix-cors = "0.7.1"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+tokio = { version = "1.45.1", features = ["full"] }
+tonic = { version = "0.13.1", features = ["transport"] }
+prost = "0.13.5"
+solana-client = "2.3.1"
+solana-transaction-status = "2.3.1"
+solana-sdk = "2.3.1"
+tracing = "0.1.41"
+tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
+reqwest = { version = "0.12.22", features = ["json"] }
+sysinfo = "0.35.2"
+utoipa = { version = "5.4.0", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "9.0.2", features = ["actix-web"] }
+prometheus = "0.14.0"
+dotenvy = "0.15.7"
 chrono = "0.4.41"
 
 [build-dependencies]
-tonic-build = "0.10"
+tonic-build = "0.13.1"
