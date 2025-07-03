@@ -8,10 +8,8 @@ use crate::services::TransactionService;
 use crate::utils::error_handling::AppError;
 use crate::utils::validation::Validator;
 use actix_web::{web, HttpResponse, Responder, Result};
-use opentelemetry::metrics::Counter;
 use opentelemetry::{global, KeyValue};
 use tracing::{error, info, instrument};
-use tracing_subscriber::util::SubscriberInitExt;
 
 /// HTTP controller for Solana transaction debugging and analysis.
 ///
@@ -33,7 +31,7 @@ impl TransactionController {
     ///
     /// # Returns
     ///
-    /// JSON response with detailed transaction analysis including:
+    /// JSON response with detailed transaction analysis including
     /// - Transaction metadata (signatures, slot, block time)
     /// - Instruction details and program interactions
     /// - Account balance changes and token movements

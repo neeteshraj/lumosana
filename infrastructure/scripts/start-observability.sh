@@ -35,34 +35,10 @@ sleep 10
 # Check service health
 echo "🏥 Checking service health..."
 
-# Wait for Grafana to be ready
-echo "📊 Waiting for Grafana to be ready..."
-timeout 60 bash -c 'until curl -f -s http://localhost:3000/api/health; do sleep 2; done' || {
-    echo "❌ Grafana failed to start"
-    exit 1
-}
-
-# Wait for Prometheus to be ready
-echo "📈 Waiting for Prometheus to be ready..."
-timeout 60 bash -c 'until curl -f -s http://localhost:9090/-/ready; do sleep 2; done' || {
-    echo "❌ Prometheus failed to start"
-    exit 1
-}
-
-# Wait for Jaeger to be ready
-echo "🔍 Waiting for Jaeger to be ready..."
-timeout 60 bash -c 'until curl -f -s http://localhost:16686/; do sleep 2; done' || {
-    echo "❌ Jaeger failed to start"
-    exit 1
-}
-
 echo ""
 echo "✅ All services are running!"
 echo ""
 echo "🌐 Service URLs:"
-echo "  📊 Grafana Dashboard:      http://localhost:3000 (admin/admin)"
-echo "  📈 Prometheus:             http://localhost:9090"
-echo "  🔍 Jaeger Tracing:         http://localhost:16686"
 echo "  📋 Lumosana Debugger:      http://localhost:8080"
 echo "  📖 API Documentation:      http://localhost:8080/swagger-ui/"
 echo "  📊 Metrics Endpoint:       http://localhost:8080/metrics"

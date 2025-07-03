@@ -3,7 +3,6 @@ use crate::controllers::health::{health_check_api, detailed_health_check_api};
 use crate::controllers::transaction::debug_transaction_api;
 use crate::controllers::config;
 use crate::dtos::{DebugRequestDto, DebugResponseDto, HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery, TransactionDetailsDto, InstructionDetailDto, TransactionAnalysisDto};
-use crate::utils::metrics::metrics_handler;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -47,9 +46,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .route("/api-docs/openapi.json", web::get().to(|| async {
             actix_web::HttpResponse::Ok().json(ApiDoc::openapi())
         }))
-        
-        // Metrics endpoint for Prometheus
-        .route("/metrics", web::get().to(metrics_handler))
         
         // API endpoints  
         .route("/debug", web::post().to(debug_transaction_api))

@@ -10,16 +10,6 @@ infrastructure/k8s/
 ├── deployment.yaml                 # Transaction debugger deployment
 ├── service.yaml                   # Transaction debugger services
 ├── envoy.yaml                     # Envoy proxy configuration and deployment
-├── jaeger.yaml                    # Jaeger tracing deployment and services
-├── prometheus-config.yaml         # Prometheus configuration
-├── prometheus-deployment.yaml     # Prometheus deployment
-├── prometheus-service.yaml        # Prometheus services
-├── otel-collector-config.yaml     # OpenTelemetry Collector configuration
-├── otel-collector-deployment.yaml # OpenTelemetry Collector deployment
-├── otel-collector-service.yaml    # OpenTelemetry Collector service
-├── grafana-config.yaml            # Grafana configuration and datasources
-├── grafana-deployment.yaml        # Grafana deployment
-├── grafana-service.yaml           # Grafana services
 └── README.md                      # This file
 
 infrastructure/scripts/
@@ -70,16 +60,6 @@ kubectl create namespace lumosana
 
 # Deploy in order (respecting dependencies)
 kubectl apply -f k8s/configmap.yaml -n lumosana
-kubectl apply -f k8s/jaeger.yaml -n lumosana
-kubectl apply -f k8s/prometheus-config.yaml -n lumosana
-kubectl apply -f k8s/prometheus-deployment.yaml -n lumosana
-kubectl apply -f k8s/prometheus-service.yaml -n lumosana
-kubectl apply -f k8s/otel-collector-config.yaml -n lumosana
-kubectl apply -f k8s/otel-collector-deployment.yaml -n lumosana
-kubectl apply -f k8s/otel-collector-service.yaml -n lumosana
-kubectl apply -f k8s/grafana-config.yaml -n lumosana
-kubectl apply -f k8s/grafana-deployment.yaml -n lumosana
-kubectl apply -f k8s/grafana-service.yaml -n lumosana
 kubectl apply -f k8s/deployment.yaml -n lumosana
 kubectl apply -f k8s/service.yaml -n lumosana
 kubectl apply -f k8s/envoy.yaml -n lumosana
@@ -125,9 +105,6 @@ kubectl port-forward svc/envoy-proxy 10000:80 -n lumosana
 - **Transaction Debugger**: Main Rust service with HTTP and gRPC endpoints
 
 ### Observability Stack
-- **Jaeger**: Distributed tracing
-- **Prometheus**: Metrics collection
-- **Grafana**: Visualization and dashboards
 - **OpenTelemetry Collector**: Telemetry data processing
 
 ### Infrastructure
@@ -145,15 +122,6 @@ kubectl get all -n lumosana
 ```bash
 # Transaction debugger logs
 kubectl logs -f deployment/transaction-debugger -n lumosana
-
-# Jaeger logs
-kubectl logs -f deployment/jaeger -n lumosana
-
-# Prometheus logs
-kubectl logs -f deployment/prometheus -n lumosana
-
-# Grafana logs
-kubectl logs -f deployment/grafana -n lumosana
 ```
 
 ### Debug Issues
@@ -164,8 +132,6 @@ kubectl describe pods -n lumosana
 # Check service endpoints
 kubectl get endpoints -n lumosana
 
-# Check ingress/service connectivity
-kubectl exec -it deployment/transaction-debugger -n lumosana -- curl http://prometheus-service:9090/-/ready
 ```
 
 ## ⚙️ Configuration
@@ -176,9 +142,6 @@ Configure the transaction debugger through the ConfigMap in `configmap.yaml`:
 - `HTTP_PORT`: HTTP server port (default: 8080)
 - `GRPC_PORT`: gRPC server port (default: 50051)
 - `RUST_LOG`: Logging level (default: info)
-- `JAEGER_SERVICE_NAME`: Service name for tracing
-- `JAEGER_AGENT_HOST`: Jaeger agent hostname
-- `OTEL_*`: OpenTelemetry configuration
 
 ### Resource Limits
 Each deployment includes resource requests and limits. Adjust them in the respective YAML files based on your cluster capacity:

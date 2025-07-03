@@ -1,7 +1,7 @@
-use opentelemetry::{global, KeyValue, InstrumentationScope};
+use opentelemetry::{global};
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_otlp::{LogExporter, MetricExporter, SpanExporter};
-use opentelemetry_sdk::{Resource, runtime, trace::SdkTracerProvider, logs::SdkLoggerProvider, metrics::SdkMeterProvider};
+use opentelemetry_sdk::{Resource, trace::SdkTracerProvider, logs::SdkLoggerProvider, metrics::SdkMeterProvider};
 use std::sync::OnceLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 
@@ -15,7 +15,6 @@ fn get_resource() -> Resource {
 }
 
 pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvider) {
-    // Logs
     let log_exporter = LogExporter::builder().with_tonic().build().expect("Log exporter failed");
     let logger_provider = SdkLoggerProvider::builder()
         .with_resource(get_resource())
@@ -29,7 +28,6 @@ pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvid
         .add_directive("h2=off".parse().unwrap())
         .add_directive("reqwest=off".parse().unwrap());
 
-    // Console log output
     let fmt_layer = tracing_subscriber::fmt::layer()
         .with_thread_names(true)
         .with_filter(EnvFilter::new("info").add_directive("opentelemetry=debug".parse().unwrap()));
@@ -39,7 +37,6 @@ pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvid
         .with(fmt_layer)
         .init();
 
-    // Traces
     let span_exporter = SpanExporter::builder().with_tonic().build().expect("Span exporter failed");
     let tracer_provider = SdkTracerProvider::builder()
         .with_resource(get_resource())
@@ -47,7 +44,6 @@ pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvid
         .build();
     global::set_tracer_provider(tracer_provider.clone());
 
-    // Metrics
     let metric_exporter = MetricExporter::builder().with_tonic().build().expect("Metric exporter failed");
     let meter_provider = SdkMeterProvider::builder()
         .with_periodic_exporter(metric_exporter)

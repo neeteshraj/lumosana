@@ -9,10 +9,6 @@ This directory contains all infrastructure-related configurations and scripts fo
 All services are deployed and running successfully in Kubernetes:
 - ✅ Transaction Debugger (HTTP + gRPC)
 - ✅ Envoy Proxy (routing and load balancing)
-- ✅ Jaeger (distributed tracing)
-- ✅ Prometheus (metrics collection)
-- ✅ Grafana (visualization)
-- ✅ OpenTelemetry Collector (telemetry aggregation)
 
 **Quick Test**: Run `./scripts/test-all-services.sh` to verify all endpoints.
 
@@ -28,25 +24,8 @@ infrastructure/
 │   ├── configmap.yaml          # Transaction debugger configuration
 │   ├── deployment.yaml         # Transaction debugger deployment
 │   ├── service.yaml           # Transaction debugger services
-│   ├── envoy.yaml             # Envoy proxy deployment
-│   ├── jaeger.yaml            # Jaeger tracing deployment and services
-│   ├── prometheus-config.yaml     # Prometheus configuration
-│   ├── prometheus-deployment.yaml # Prometheus deployment
-│   ├── prometheus-service.yaml    # Prometheus services
-│   ├── otel-collector-config.yaml     # OpenTelemetry Collector configuration
-│   ├── otel-collector-deployment.yaml # OpenTelemetry Collector deployment
-│   ├── otel-collector-service.yaml    # OpenTelemetry Collector service
-│   ├── grafana-config.yaml        # Grafana configuration and datasources
-│   ├── grafana-deployment.yaml    # Grafana deployment
-│   ├── grafana-service.yaml       # Grafana services
+│   ├── envoy.yaml             # Envoy proxy deployment      # Grafana services
 │   └── README.md              # Kubernetes deployment guide
-├── observability/      # Monitoring and observability configs
-│   ├── grafana/
-│   │   ├── dashboards/
-│   │   ├── dashboards.yml
-│   │   └── datasources.yml
-│   ├── otel-collector.yml
-│   └── prometheus.yml
 └── scripts/           # Infrastructure automation scripts
     ├── deploy-k8s.sh          # Comprehensive Kubernetes deployment script
     ├── start-observability.sh # Docker Compose stack startup
@@ -102,9 +81,6 @@ When running with Docker Compose:
 - **API Documentation**: http://localhost:8080/swagger-ui/
 - **Envoy Proxy**: http://localhost:10000
 - **Envoy Admin**: http://localhost:9901
-- **Grafana Dashboard**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **Jaeger Tracing**: http://localhost:16686
 
 ## 🔧 Configuration
 
@@ -118,10 +94,6 @@ The service can be configured using environment variables defined in:
 
 The infrastructure includes a complete observability stack:
 
-- **Prometheus**: Metrics collection and storage
-- **Grafana**: Metrics visualization and dashboards
-- **Jaeger**: Distributed tracing
-- **OpenTelemetry Collector**: Telemetry data collection and processing
 - **Envoy Proxy**: Advanced load balancing and traffic management
 
 ### Envoy Features
@@ -136,22 +108,6 @@ The Envoy proxy is configured with advanced features:
 - CORS support
 - gRPC Web support
 - Comprehensive metrics
-
-## 📊 Monitoring
-
-### Grafana Dashboards
-
-Pre-configured dashboards are available in `observability/grafana/dashboards/`:
-- Transaction Debugger metrics
-- System performance
-- Request/response patterns
-
-### Prometheus Metrics
-
-The following services expose Prometheus metrics:
-- Lumosana Debugger (`/metrics`)
-- Envoy Proxy (`/stats/prometheus`)
-- OpenTelemetry Collector
 
 ## 🛠️ Scripts
 
@@ -180,8 +136,6 @@ Comprehensive test script to verify all Envoy features are working correctly.
 2. **Develop and test:**
    - Make changes to the application code
    - Access services through Envoy proxy at `localhost:10000`
-   - Monitor metrics in Grafana
-   - View traces in Jaeger
 
 3. **Test Envoy features:**
    ```bash
@@ -212,7 +166,6 @@ To customize the infrastructure:
 4. **Adjust Envoy settings**: Edit `envoy/envoy.yaml`
 
 For production deployments, consider:
-- Using external databases for Prometheus and Grafana
 - Implementing proper secret management
 - Configuring resource limits and requests
 - Setting up proper backup strategies

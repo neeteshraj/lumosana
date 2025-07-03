@@ -100,18 +100,13 @@ echo "- Gauges: $(curl -s "$ENVOY_ADMIN/stats?type=Gauges" | wc -l) metrics"
 echo "- Histograms: $(curl -s "$ENVOY_ADMIN/stats?type=Histograms" | wc -l) metrics"
 echo "✅ Comprehensive metrics categorization"
 
-# Test 17: Prometheus Integration
-echo "🎯 17. Testing Prometheus Metrics..."
-curl -s "$ENVOY_ADMIN/stats/prometheus" | head -5
-echo "✅ Prometheus metrics format available"
-
-# Test 18: Health Checks
+# Test 17: Health Checks
 echo "❤️ 18. Testing Health Check Configuration..."
 echo "Health check configuration for clusters:"
 curl -s "$ENVOY_ADMIN/clusters" | grep -A 3 "health_flags"
 echo "✅ Health checks configured for upstream clusters"
 
-# Test 19: Retry Policies
+# Test 18: Retry Policies
 echo "🔄 19. Testing Retry Policies..."
 echo "Making request to test retry policy..."
 curl -s "$ENVOY_PROXY/health" > /dev/null
@@ -119,7 +114,7 @@ echo "Retry stats:"
 curl -s "$ENVOY_ADMIN/stats" | grep retry | head -3 || echo "No retries triggered yet"
 echo "✅ Retry policies configured"
 
-# Test 20: Watchdog and Safety Features
+# Test 19: Watchdog and Safety Features
 echo "🐕 20. Testing Watchdog Configuration..."
 echo "Watchdog stats:"
 curl -s "$ENVOY_ADMIN/stats" | grep watchdog || echo "Watchdog running normally (no issues detected)"
@@ -154,7 +149,6 @@ echo "✅ Runtime Config - Dynamic configuration changes"
 echo "✅ Memory Monitoring - Real-time memory usage tracking"
 echo "✅ Config Dump - Complete configuration introspection"
 echo "✅ Multiple Listeners - HTTP and gRPC endpoints"
-echo "✅ Prometheus Integration - Native Prometheus metrics"
 echo "✅ Health Checks - Upstream health monitoring"
 echo "✅ Retry Policies - Automatic retry handling"
 echo "✅ Watchdog - Safety and monitoring features"
@@ -164,5 +158,4 @@ echo "🌟 All Envoy features are active and working!"
 echo "🔗 Admin Interface: $ENVOY_ADMIN"
 echo "🔗 Proxy Interface: $ENVOY_PROXY"
 echo "📊 View real-time stats: $ENVOY_ADMIN/stats"
-echo "📈 Prometheus metrics: $ENVOY_ADMIN/stats/prometheus"
 echo "💡 Runtime config: $ENVOY_ADMIN/runtime"

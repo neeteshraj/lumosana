@@ -57,22 +57,8 @@ test_endpoint "Transaction Debugger (via Envoy)" "http://localhost:80/health"
 pkill -f "kubectl port-forward" || true
 sleep 2
 
-# Start port forwards for other services
-echo
-echo "🚀 Starting port forwards for testing..."
-kubectl port-forward -n lumosana svc/jaeger-ui 16686:80 &
-kubectl port-forward -n lumosana svc/prometheus-service 9090:9090 &
-kubectl port-forward -n lumosana svc/grafana-service 3000:3000 &
-kubectl port-forward -n lumosana svc/otel-collector-service 13133:13133 &
-
 # Wait for port forwards to be ready
 sleep 5
-
-# Test all services
-test_endpoint "Jaeger UI" "http://localhost:16686"
-test_endpoint "Prometheus" "http://localhost:9090/graph"
-test_endpoint "Grafana" "http://localhost:3000"
-test_endpoint "OTEL Collector" "http://localhost:13133"
 
 echo
 echo "🎯 Testing Envoy Features"
@@ -136,10 +122,6 @@ echo
 echo "Available endpoints:"
 echo "  • Transaction Debugger: http://localhost/health (via Envoy)"
 echo "  • Transaction Debugger: http://localhost (direct LoadBalancer)"
-echo "  • Jaeger UI: http://localhost:16686 (port-forward)"
-echo "  • Prometheus: http://localhost:9090 (port-forward)"
-echo "  • Grafana: http://localhost:3000 (port-forward)"
-echo "  • OTEL Collector: http://localhost:13133 (port-forward)"
 echo
 echo "gRPC endpoints:"
 echo "  • Transaction Debugger gRPC: localhost:50051"

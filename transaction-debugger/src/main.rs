@@ -19,6 +19,8 @@ use utils::telemetry::{init_telemetry, shutdown_telemetry};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    dotenvy::dotenv().ok();
+
     let args: Vec<String> = env::args().collect();
 
     let config = Config::from_env()
@@ -48,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 println!("\nOptions:");
                 println!("  --print-detailed    Print detailed configuration in JSON format");
                 println!("  --save-config FILE  Save configuration to specified file");
-                println!("  --help             Show this help message");
+                println!("  --help              Show this help message");
                 println!("\nWithout options, starts the full server.");
                 return Ok(());
             }
@@ -68,7 +70,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // === INIT TELEMETRY ===
     let (tracer_provider, meter_provider, logger_provider) = init_telemetry();
-    utils::metrics::init_metrics();
     println!("Starting Transaction Debugger Service");
 
     let grpc_addr = format!("{}:{}", config.server.host, config.server.grpc_port).parse()?;
@@ -120,13 +121,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .bind(&http_addr)?
         .run();
 
-    // === RUN SERVERS IN PARALLEL ===
     let result = tokio::try_join!(
         async { grpc_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) },
         async { http_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) }
     );
 
-    // === CLEANUP ===
     if let Err(err) = shutdown_telemetry(tracer_provider, meter_provider, logger_provider) {
         eprintln!("Telemetry shutdown failed: {err}");
     }
