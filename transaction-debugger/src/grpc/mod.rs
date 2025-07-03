@@ -1,6 +1,6 @@
-pub mod transaction;
-pub mod health;
 pub mod converters;
+pub mod health;
+pub mod transaction;
 
-pub use transaction::{TransactionDebuggerService};
-pub use health::{HealthCheckService};
+pub use health::HealthCheckService;
+pub use transaction::TransactionDebuggerService;

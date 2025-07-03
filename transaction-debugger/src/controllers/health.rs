@@ -2,9 +2,9 @@ use crate::dtos::{HealthCheckRequestDto, HealthCheckResponseDto, HealthQuery};
 use crate::services::HealthService;
 use actix_web::{web, HttpResponse, Responder, Result};
 use once_cell::sync::Lazy;
-use opentelemetry::{global, KeyValue};
 use opentelemetry::metrics::Counter;
-use tracing::{info, instrument, Span, event, Level};
+use opentelemetry::{global, KeyValue};
+use tracing::{event, info, instrument, Level, Span};
 
 static HEALTH_CHECK_COUNTER: Lazy<Counter<u64>> = Lazy::new(|| {
     global::meter("transaction-debugger")
@@ -29,10 +29,13 @@ impl HealthController {
             message = "starting basic health check"
         );
 
-        HEALTH_CHECK_COUNTER.add(1, &[
-            KeyValue::new("type", "basic"),
-            KeyValue::new("service", service_name.clone()),
-        ]);
+        HEALTH_CHECK_COUNTER.add(
+            1,
+            &[
+                KeyValue::new("type", "basic"),
+                KeyValue::new("service", service_name.clone()),
+            ],
+        );
 
         let request = HealthCheckRequestDto {
             service: query.service.clone(),
@@ -58,13 +61,19 @@ impl HealthController {
             message = "starting detailed health check"
         );
 
-        HEALTH_CHECK_COUNTER.add(1, &[
-            KeyValue::new("type", "detailed"),
-            KeyValue::new("service", service_name.clone()),
-        ]);
+        HEALTH_CHECK_COUNTER.add(
+            1,
+            &[
+                KeyValue::new("type", "detailed"),
+                KeyValue::new("service", service_name.clone()),
+            ],
+        );
 
         let response = HealthService::check_health(req.into_inner()).await;
-        info!("Detailed health check completed for service: {}", service_name);
+        info!(
+            "Detailed health check completed for service: {}",
+            service_name
+        );
         Ok(HttpResponse::Ok().json(response))
     }
 }

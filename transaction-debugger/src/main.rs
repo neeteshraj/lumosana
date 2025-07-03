@@ -1,20 +1,20 @@
-mod routes;
+mod config;
+mod controllers;
+mod dtos;
 mod grpc;
 mod models;
-mod controllers;
+mod routes;
 mod services;
-mod dtos;
 mod utils;
-mod config;
 
-use actix_web::{App, HttpServer, middleware::Logger, web};
 use actix_cors::Cors;
-use tonic::transport::Server;
-use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
-use grpc::health::debugger::health_check_server::HealthCheckServer;
-use grpc::{TransactionDebuggerService, HealthCheckService};
+use actix_web::{middleware::Logger, web, App, HttpServer};
 use config::Config;
+use grpc::health::debugger::health_check_server::HealthCheckServer;
+use grpc::transaction::debugger::transaction_debugger_server::TransactionDebuggerServer;
+use grpc::{HealthCheckService, TransactionDebuggerService};
 use std::env;
+use tonic::transport::Server;
 use utils::telemetry::{init_telemetry, shutdown_telemetry};
 
 #[tokio::main]
@@ -23,10 +23,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let args: Vec<String> = env::args().collect();
 
-    let config = Config::from_env()
-        .map_err(|e| format!("Failed to load configuration: {}", e))?;
+    let config = Config::from_env().map_err(|e| format!("Failed to load configuration: {}", e))?;
 
-    config.validate()
+    config
+        .validate()
         .map_err(|e| format!("Configuration validation failed: {}", e))?;
 
     if args.len() > 1 {
@@ -118,12 +118,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .wrap(cors)
             .configure(routes::api::config)
     })
-        .bind(&http_addr)?
-        .run();
+    .bind(&http_addr)?
+    .run();
 
     let result = tokio::try_join!(
-        async { grpc_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) },
-        async { http_server.await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>) }
+        async {
+            grpc_server
+                .await
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+        },
+        async {
+            http_server
+                .await
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)
+        }
     );
 
     if let Err(err) = shutdown_telemetry(tracer_provider, meter_provider, logger_provider) {

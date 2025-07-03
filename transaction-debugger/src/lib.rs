@@ -1,11 +1,11 @@
-pub mod routes;
+pub mod config;
+pub mod controllers;
+pub mod dtos;
 pub mod grpc;
 pub mod models;
-pub mod controllers;
+pub mod routes;
 pub mod services;
-pub mod dtos;
 pub mod utils;
-pub mod config;
 
 pub use grpc::converters::ResponseConverter;
-pub use grpc::{TransactionDebuggerService, HealthCheckService};
+pub use grpc::{HealthCheckService, TransactionDebuggerService};

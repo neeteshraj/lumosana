@@ -1,21 +1,28 @@
-use opentelemetry::{global};
+use opentelemetry::global;
 use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_otlp::{LogExporter, MetricExporter, SpanExporter};
-use opentelemetry_sdk::{Resource, trace::SdkTracerProvider, logs::SdkLoggerProvider, metrics::SdkMeterProvider};
+use opentelemetry_sdk::{
+    logs::SdkLoggerProvider, metrics::SdkMeterProvider, trace::SdkTracerProvider, Resource,
+};
 use std::sync::OnceLock;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter, Layer};
 
 fn get_resource() -> Resource {
     static RESOURCE: OnceLock<Resource> = OnceLock::new();
-    RESOURCE.get_or_init(|| {
-        Resource::builder()
-            .with_service_name("transaction-debugger")
-            .build()
-    }).clone()
+    RESOURCE
+        .get_or_init(|| {
+            Resource::builder()
+                .with_service_name("transaction-debugger")
+                .build()
+        })
+        .clone()
 }
 
 pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvider) {
-    let log_exporter = LogExporter::builder().with_tonic().build().expect("Log exporter failed");
+    let log_exporter = LogExporter::builder()
+        .with_tonic()
+        .build()
+        .expect("Log exporter failed");
     let logger_provider = SdkLoggerProvider::builder()
         .with_resource(get_resource())
         .with_batch_exporter(log_exporter)
@@ -37,14 +44,20 @@ pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvid
         .with(fmt_layer)
         .init();
 
-    let span_exporter = SpanExporter::builder().with_tonic().build().expect("Span exporter failed");
+    let span_exporter = SpanExporter::builder()
+        .with_tonic()
+        .build()
+        .expect("Span exporter failed");
     let tracer_provider = SdkTracerProvider::builder()
         .with_resource(get_resource())
         .with_batch_exporter(span_exporter)
         .build();
     global::set_tracer_provider(tracer_provider.clone());
 
-    let metric_exporter = MetricExporter::builder().with_tonic().build().expect("Metric exporter failed");
+    let metric_exporter = MetricExporter::builder()
+        .with_tonic()
+        .build()
+        .expect("Metric exporter failed");
     let meter_provider = SdkMeterProvider::builder()
         .with_periodic_exporter(metric_exporter)
         .with_resource(get_resource())
@@ -57,7 +70,7 @@ pub fn init_telemetry() -> (SdkTracerProvider, SdkMeterProvider, SdkLoggerProvid
 pub fn shutdown_telemetry(
     tracer: SdkTracerProvider,
     meter: SdkMeterProvider,
-    logger: SdkLoggerProvider
+    logger: SdkLoggerProvider,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mut errors = vec![];
 

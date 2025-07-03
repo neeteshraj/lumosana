@@ -3,7 +3,7 @@
 //! This module provides functionality for testing the transaction processing pipeline.
 
 use crate::dtos::transaction::TransactionAnalysisDto;
-use crate::models::transaction::{TransactionAnalysis};
+use crate::models::transaction::TransactionAnalysis;
 
 /// Validates transaction processing pipeline functionality.
 ///

@@ -18,7 +18,7 @@ pub struct HealthCheckResponseDto {
 }
 
 /// Query parameters for basic health check endpoint.
-/// 
+///
 /// Allows filtering health checks by specific service components.
 #[derive(Deserialize, Debug, ToSchema)]
 pub struct HealthQuery {

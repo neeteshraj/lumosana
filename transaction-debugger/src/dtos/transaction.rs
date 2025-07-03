@@ -5,7 +5,9 @@ use utoipa::ToSchema;
 #[derive(Debug, Deserialize, Serialize, ToSchema)]
 pub struct DebugRequestDto {
     /// Solana transaction signature to analyze
-    #[schema(example = "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW")]
+    #[schema(
+        example = "5VERv8NMvzbJMEkV8xnrLkEaWRtSz9CosKDYjCJjBRnbJLgp8uirBgmQpjKhoR4tjF3ZpRzrFmBV6UjKdiSZkQUW"
+    )]
     pub signature: String,
     /// RPC URL to use for fetching transaction data
     #[schema(example = "https://api.mainnet-beta.solana.com")]
@@ -129,7 +131,11 @@ impl From<TransactionDetails> for TransactionDetailsDto {
             signatures: details.signatures,
             message_type: details.message_type,
             account_keys_count: details.account_keys_count,
-            instruction_details: details.instruction_details.into_iter().map(Into::into).collect(),
+            instruction_details: details
+                .instruction_details
+                .into_iter()
+                .map(Into::into)
+                .collect(),
             inner_instructions_count: details.inner_instructions_count,
         }
     }

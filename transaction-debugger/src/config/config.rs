@@ -131,14 +131,17 @@ impl Config {
         // Try to load environment-specific .env file first, then fallback to .env
         let environment = env::var("ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
         let env_file = format!(".env.{}", environment);
-        
+
         // Try to load environment-specific file first
         if let Ok(_) = dotenvy::from_filename(&env_file) {
             println!("Loaded environment configuration from: {}", env_file);
         } else if let Ok(_) = dotenvy::dotenv() {
             println!("Loaded environment configuration from: .env");
         } else {
-            println!("Warning: No .env file found (tried {} and .env), using environment variables only", env_file);
+            println!(
+                "Warning: No .env file found (tried {} and .env), using environment variables only",
+                env_file
+            );
         }
 
         Ok(Config {
@@ -164,16 +167,34 @@ impl Config {
             jaeger: JaegerConfig {
                 agent_host: get_env_var("JAEGER_AGENT_HOST", "localhost")?,
                 agent_port: get_env_var_parsed("JAEGER_AGENT_PORT", 6831)?,
-                collector_endpoint: get_env_var("JAEGER_COLLECTOR_ENDPOINT", "http://localhost:14268/api/traces")?,
-                exporter_endpoint: get_env_var("OTEL_EXPORTER_JAEGER_ENDPOINT", "http://localhost:14268/api/traces")?,
+                collector_endpoint: get_env_var(
+                    "JAEGER_COLLECTOR_ENDPOINT",
+                    "http://localhost:14268/api/traces",
+                )?,
+                exporter_endpoint: get_env_var(
+                    "OTEL_EXPORTER_JAEGER_ENDPOINT",
+                    "http://localhost:14268/api/traces",
+                )?,
             },
             otel: OtelConfig {
                 service_name: get_env_var("OTEL_SERVICE_NAME", "transaction-debugger")?,
                 service_version: get_env_var("OTEL_SERVICE_VERSION", "1.0.0")?,
-                resource_attributes: get_env_var("OTEL_RESOURCE_ATTRIBUTES", "service.name=transaction-debugger,service.version=1.0.0")?,
-                exporter_endpoint: get_env_var("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")?,
-                traces_endpoint: get_env_var("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT", "http://localhost:4317")?,
-                metrics_endpoint: get_env_var("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT", "http://localhost:4317")?,
+                resource_attributes: get_env_var(
+                    "OTEL_RESOURCE_ATTRIBUTES",
+                    "service.name=transaction-debugger,service.version=1.0.0",
+                )?,
+                exporter_endpoint: get_env_var(
+                    "OTEL_EXPORTER_OTLP_ENDPOINT",
+                    "http://localhost:4317",
+                )?,
+                traces_endpoint: get_env_var(
+                    "OTEL_EXPORTER_OTLP_TRACES_ENDPOINT",
+                    "http://localhost:4317",
+                )?,
+                metrics_endpoint: get_env_var(
+                    "OTEL_EXPORTER_OTLP_METRICS_ENDPOINT",
+                    "http://localhost:4317",
+                )?,
             },
             prometheus: PrometheusConfig {
                 endpoint: get_env_var("PROMETHEUS_ENDPOINT", "localhost:9090")?,
@@ -196,11 +217,17 @@ impl Config {
             solana: SolanaConfig {
                 rpc_url: get_env_var("SOLANA_RPC_URL", "https://api.mainnet-beta.solana.com")?,
                 rpc_timeout: get_env_var_parsed("SOLANA_RPC_TIMEOUT", 30)?,
-                websocket_url: get_env_var("SOLANA_WEBSOCKET_URL", "wss://api.mainnet-beta.solana.com")?,
+                websocket_url: get_env_var(
+                    "SOLANA_WEBSOCKET_URL",
+                    "wss://api.mainnet-beta.solana.com",
+                )?,
             },
             security: SecurityConfig {
                 cors_allowed_origins: get_env_var("CORS_ALLOWED_ORIGINS", "*")?,
-                cors_allowed_methods: get_env_var("CORS_ALLOWED_METHODS", "GET,POST,PUT,DELETE,OPTIONS")?,
+                cors_allowed_methods: get_env_var(
+                    "CORS_ALLOWED_METHODS",
+                    "GET,POST,PUT,DELETE,OPTIONS",
+                )?,
                 cors_allowed_headers: get_env_var("CORS_ALLOWED_HEADERS", "*")?,
                 api_key_header: env::var("API_KEY_HEADER").ok(),
             },
@@ -216,13 +243,17 @@ impl Config {
         if self.server.http_port == 0 {
             return Err(ConfigError::ParseError("HTTP port cannot be 0".to_string()));
         }
-        
+
         if self.server.grpc_port == 0 {
             return Err(ConfigError::ParseError("gRPC port cannot be 0".to_string()));
         }
 
-        if self.observability.trace_sampling_rate < 0.0 || self.observability.trace_sampling_rate > 1.0 {
-            return Err(ConfigError::ParseError("Trace sampling rate must be between 0.0 and 1.0".to_string()));
+        if self.observability.trace_sampling_rate < 0.0
+            || self.observability.trace_sampling_rate > 1.0
+        {
+            return Err(ConfigError::ParseError(
+                "Trace sampling rate must be between 0.0 and 1.0".to_string(),
+            ));
         }
 
         Ok(())
@@ -234,14 +265,25 @@ impl Config {
 
     pub fn print_summary(&self) {
         println!("=== Configuration Summary ===");
-        println!("App: {} v{} ({})", self.app.name, self.app.version, self.app.environment);
-        println!("HTTP Server: {}:{}", self.server.host, self.server.http_port);
-        println!("gRPC Server: {}:{}", self.server.host, self.server.grpc_port);
+        println!(
+            "App: {} v{} ({})",
+            self.app.name, self.app.version, self.app.environment
+        );
+        println!(
+            "HTTP Server: {}:{}",
+            self.server.host, self.server.http_port
+        );
+        println!(
+            "gRPC Server: {}:{}",
+            self.server.host, self.server.grpc_port
+        );
         println!("Log Level: {}", self.logging.rust_log);
-        println!("Observability: metrics={}, tracing={}, logging={}", 
-                 self.observability.enable_metrics, 
-                 self.observability.enable_tracing, 
-                 self.observability.enable_logging);
+        println!(
+            "Observability: metrics={}, tracing={}, logging={}",
+            self.observability.enable_metrics,
+            self.observability.enable_tracing,
+            self.observability.enable_logging
+        );
         println!("============================");
     }
 
@@ -266,9 +308,7 @@ impl Config {
 fn get_env_var(key: &str, default: &str) -> Result<String, ConfigError> {
     match env::var(key) {
         Ok(val) => Ok(val),
-        Err(_) => {
-            Ok(default.to_string())
-        }
+        Err(_) => Ok(default.to_string()),
     }
 }
 

@@ -1,5 +1,5 @@
-use actix_web::{web, HttpResponse, Result, HttpRequest};
 use crate::config::Config;
+use actix_web::{web, HttpRequest, HttpResponse, Result};
 use std::sync::Arc;
 
 pub async fn get_config_summary(config: web::Data<Arc<Config>>) -> Result<HttpResponse> {
@@ -27,31 +27,36 @@ pub async fn get_config_summary(config: web::Data<Arc<Config>>) -> Result<HttpRe
 pub async fn get_config_detailed(config: web::Data<Arc<Config>>) -> Result<HttpResponse> {
     match config.to_json() {
         Ok(json_str) => {
-            let json_value: serde_json::Value = serde_json::from_str(&json_str)
-                .map_err(|_| actix_web::error::ErrorInternalServerError("Failed to parse config JSON"))?;
+            let json_value: serde_json::Value = serde_json::from_str(&json_str).map_err(|_| {
+                actix_web::error::ErrorInternalServerError("Failed to parse config JSON")
+            })?;
             Ok(HttpResponse::Ok().json(json_value))
         }
         Err(_) => Ok(HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "Failed to serialize configuration"
-        })))
+        }))),
     }
 }
 
-pub async fn download_config(config: web::Data<Arc<Config>>, _req: HttpRequest) -> Result<HttpResponse> {
+pub async fn download_config(
+    config: web::Data<Arc<Config>>,
+    _req: HttpRequest,
+) -> Result<HttpResponse> {
     let environment = &config.app.environment;
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
     let filename = format!("{}-config-{}.json", environment, timestamp);
 
     match config.to_json() {
-        Ok(json_str) => {
-            Ok(HttpResponse::Ok()
-                .content_type("application/json")
-                .insert_header(("Content-Disposition", format!("attachment; filename=\"{}\"", filename)))
-                .body(json_str))
-        }
+        Ok(json_str) => Ok(HttpResponse::Ok()
+            .content_type("application/json")
+            .insert_header((
+                "Content-Disposition",
+                format!("attachment; filename=\"{}\"", filename),
+            ))
+            .body(json_str)),
         Err(_) => Ok(HttpResponse::InternalServerError().json(serde_json::json!({
             "error": "Failed to serialize configuration for download"
-        })))
+        }))),
     }
 }
 
@@ -60,6 +65,6 @@ pub fn config_routes(cfg: &mut web::ServiceConfig) {
         web::scope("/api/config")
             .route("/summary", web::get().to(get_config_summary))
             .route("/detailed", web::get().to(get_config_detailed))
-            .route("/download", web::get().to(download_config))
+            .route("/download", web::get().to(download_config)),
     );
 }

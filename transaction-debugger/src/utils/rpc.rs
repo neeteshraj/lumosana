@@ -4,7 +4,7 @@
 
 use std::time::Duration;
 use tokio::time::timeout;
-use tracing::{info, error};
+use tracing::{error, info};
 
 /// Tests connectivity to Solana RPC endpoints.
 ///
@@ -21,12 +21,15 @@ pub async fn check_rpc_connectivity() -> bool {
 
     match timeout(Duration::from_secs(3), async {
         let client = reqwest::Client::new();
-        client.post(rpc_url)
+        client
+            .post(rpc_url)
             .header("Content-Type", "application/json")
             .body(r#"{"jsonrpc":"2.0","id":1,"method":"getVersion","params":[]}"#)
             .send()
             .await
-    }).await {
+    })
+    .await
+    {
         Ok(Ok(response)) => {
             let success = response.status().is_success();
             if success {

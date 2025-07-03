@@ -68,9 +68,9 @@ impl TransactionController {
 
         if let Err(e) = Validator::validate_debug_request(&request.signature, &request.rpc_url) {
             let error_response = serde_json::json!({
-            "error": "validation_error",
-            "message": e.to_string()
-        });
+                "error": "validation_error",
+                "message": e.to_string()
+            });
 
             counter.add(1, &[KeyValue::new("status", "validation_error")]);
 
@@ -89,9 +89,9 @@ impl TransactionController {
                 counter.add(1, &[KeyValue::new("status", e.variant_name())]);
 
                 let error_response = serde_json::json!({
-                "error": e.variant_name(),
-                "message": e.to_string()
-            });
+                    "error": e.variant_name(),
+                    "message": e.to_string()
+                });
 
                 let response = match &e {
                     AppError::ValidationError(_) => {
