@@ -41,15 +41,40 @@ static_resources:
                       domains: ["*"]
                       routes:
                         - match: { prefix: "/debug" }
-                          route: { cluster: transaction_debugger_http }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 30s
+                          request_headers_to_add:
+                            - header:
+                                key: "x-service-name"
+                                value: "transaction-debugger"
+                            - header:
+                                key: "x-api-version"
+                                value: "v1"
                         - match: { prefix: "/health" }
-                          route: { cluster: transaction_debugger_http }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 5s
                         - match: { prefix: "/metrics" }
-                          route: { cluster: transaction_debugger_http }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 10s
                         - match: { prefix: "/swagger-ui" }
-                          route: { cluster: transaction_debugger_http }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 15s
+                        - match: { prefix: "/api/v1/transaction" }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 30s
+                          request_headers_to_add:
+                            - header:
+                                key: "x-microservice"
+                                value: "transaction-debugger"
                         - match: { prefix: "/" }
-                          route: { cluster: transaction_debugger_http }
+                          route: 
+                            cluster: transaction_debugger_http
+                            timeout: 30s
                       cors:
                         allow_origin_string_match:
                           - prefix: "*"
@@ -58,6 +83,57 @@ static_resources:
                         max_age: "1728000"
                         expose_headers: grpc-status,grpc-message
                 http_filters:
+                  - name: envoy.filters.http.local_ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+                      type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                      value:
+                        stat_prefix: transaction_debugger_rate_limiter
+                        token_bucket:
+                          max_tokens: 1000
+                          tokens_per_fill: 1000
+                          fill_interval: 60s
+                        filter_enabled:
+                          runtime_key: transaction_debugger_rate_limit_enabled
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        filter_enforced:
+                          runtime_key: transaction_debugger_rate_limit_enforced
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        descriptors:
+                          - entries:
+                              - key: remote_address
+                                value: "*"
+                            token_bucket:
+                              max_tokens: 1000
+                              tokens_per_fill: 1000
+                              fill_interval: 60s
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        lumosana_jwt:
+                          issuer: "https://auth.lumosana.com"
+                          audiences:
+                            - "transaction-debugger"
+                          remote_jwks:
+                            http_uri:
+                              uri: "https://auth.lumosana.com/.well-known/jwks.json"
+                              cluster: auth_service
+                              timeout: 5s
+                            cache_duration: 300s
+                      rules:
+                        - match:
+                            prefix: "/api"
+                          requires:
+                            provider_name: "lumosana_jwt"
+                        - match:
+                            prefix: "/debug"
+                          requires:
+                            provider_name: "lumosana_jwt"
                   - name: envoy.filters.http.health_check
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
@@ -108,8 +184,35 @@ static_resources:
                     - name: grpc_service
                       domains: ["*"]
                       routes:
+                        - match: { prefix: "/debugger.TransactionDebugger" }
+                          route: 
+                            cluster: transaction_debugger_grpc
+                            timeout: 30s
+                          request_headers_to_add:
+                            - header:
+                                key: "x-service-name"
+                                value: "transaction-debugger"
+                            - header:
+                                key: "x-api-version"
+                                value: "v1"
+                            - header:
+                                key: "x-protocol"
+                                value: "grpc"
+                        - match: { prefix: "/debugger.HealthCheck" }
+                          route: 
+                            cluster: transaction_debugger_grpc
+                            timeout: 5s
+                          request_headers_to_add:
+                            - header:
+                                key: "x-service-name"
+                                value: "transaction-debugger"
+                            - header:
+                                key: "x-check-type"
+                                value: "health"
                         - match: { prefix: "/" }
-                          route: { cluster: transaction_debugger_grpc }
+                          route: 
+                            cluster: transaction_debugger_grpc
+                            timeout: 30s
                       cors:
                         allow_origin_string_match:
                           - prefix: "*"
@@ -118,6 +221,58 @@ static_resources:
                         max_age: "1728000"
                         expose_headers: grpc-status,grpc-message,grpc-status-details-bin
                 http_filters:
+                  - name: envoy.filters.http.jwt_authn
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.jwt_authn.v3.JwtAuthentication
+                      providers:
+                        lumosana_jwt_grpc:
+                          issuer: "https://auth.lumosana.com"
+                          audiences:
+                            - "transaction-debugger-grpc"
+                            - "transaction-debugger"
+                          remote_jwks:
+                            http_uri:
+                              uri: "https://auth.lumosana.com/.well-known/jwks.json"
+                              cluster: auth_service
+                              timeout: 5s
+                            cache_duration: 300s
+                      rules:
+                        - match:
+                            prefix: "/debugger.TransactionDebugger"
+                          requires:
+                            provider_name: "lumosana_jwt_grpc"
+                        - match:
+                            prefix: "/debugger.HealthCheck"
+                          requires:
+                            provider_name: "lumosana_jwt_grpc"
+                  - name: envoy.filters.http.local_ratelimit
+                    typed_config:
+                      "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+                      type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+                      value:
+                        stat_prefix: transaction_debugger_grpc_rate_limiter
+                        token_bucket:
+                          max_tokens: 500
+                          tokens_per_fill: 500
+                          fill_interval: 60s
+                        filter_enabled:
+                          runtime_key: transaction_debugger_grpc_rate_limit_enabled
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        filter_enforced:
+                          runtime_key: transaction_debugger_grpc_rate_limit_enforced
+                          default_value:
+                            numerator: 100
+                            denominator: HUNDRED
+                        descriptors:
+                          - entries:
+                              - key: remote_address
+                                value: "*"
+                            token_bucket:
+                              max_tokens: 500
+                              tokens_per_fill: 500
+                              fill_interval: 60s
                   - name: envoy.filters.http.health_check
                     typed_config:
                       "@type": type.googleapis.com/envoy.extensions.filters.http.health_check.v3.HealthCheck
@@ -226,6 +381,25 @@ static_resources:
                       address: 34.87.159.61
                       port_value: 4317
 
+    - name: auth_service
+      connect_timeout: 1s
+      type: logical_dns
+      lb_policy: round_robin
+      load_assignment:
+        cluster_name: auth_service
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: auth.lumosana.com
+                      port_value: 443
+      transport_socket:
+        name: envoy.transport_sockets.tls
+        typed_config:
+          "@type": type.googleapis.com/envoy.extensions.transport_sockets.tls.v3.UpstreamTlsContext
+          sni: auth.lumosana.com
+
 admin:
   address:
     socket_address:
@@ -264,11 +438,15 @@ stats_config:
       buckets: [0.5, 1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
 
 node:
-  id: envoy-proxy
-  cluster: transaction-debugger
+  id: transaction-debugger-envoy-proxy
+  cluster: lumosana-transaction-debugger
   metadata:
-    service_name: transaction-debugger-envoy
-    service_version: "1.0.0"
+    service_name: transaction-debugger
+    service_version: "1.1.0"
     environment: "development"
-    region: "local"
-    availability_zone: "local-az"
+    region: "us-west-2"
+    availability_zone: "us-west-2a"
+    microservice_type: "transaction-debugger"
+    responsibilities: "Real-time debugging, instruction stepping, state visualization"
+    tech_stack: "Rust, Tokio, Actix, Solana SDK"
+    lumosana_component: "microservices-layer"
