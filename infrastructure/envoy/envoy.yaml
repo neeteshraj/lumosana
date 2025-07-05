@@ -137,6 +137,28 @@ static_resources:
       connect_timeout: 1s
       type: strict_dns
       lb_policy: round_robin
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 100
+            max_pending_requests: 50
+            max_requests: 200
+            max_retries: 3
+      outlier_detection:
+        consecutive_5xx: 3
+        interval: 10s
+        base_ejection_time: 30s
+        max_ejection_percent: 50
+      health_checks:
+        - timeout: 5s
+          interval: 10s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          http_health_check:
+            path: "/health"
+            expected_statuses:
+              - start: 200
+                end: 299
       load_assignment:
         cluster_name: transaction_debugger_http
         endpoints:
@@ -151,6 +173,25 @@ static_resources:
       connect_timeout: 1s
       type: strict_dns
       lb_policy: round_robin
+      circuit_breakers:
+        thresholds:
+          - priority: DEFAULT
+            max_connections: 50
+            max_pending_requests: 25
+            max_requests: 100
+            max_retries: 3
+      outlier_detection:
+        consecutive_5xx: 3
+        interval: 10s
+        base_ejection_time: 30s
+        max_ejection_percent: 50
+      health_checks:
+        - timeout: 5s
+          interval: 15s
+          unhealthy_threshold: 3
+          healthy_threshold: 2
+          grpc_health_check:
+            service_name: "debugger.HealthCheck"
       typed_extension_protocol_options:
         envoy.extensions.upstreams.http.v3.HttpProtocolOptions:
           "@type": type.googleapis.com/envoy.extensions.upstreams.http.v3.HttpProtocolOptions
@@ -200,7 +241,34 @@ stats_sinks:
         envoy_grpc:
           cluster_name: otel-collector
         timeout: 2s
+      emit_tags_as_labels: true
+
+stats_config:
+  stats_tags:
+    - tag_name: cluster_name
+      regex: "^cluster\\.((.+?)\\.).*"
+    - tag_name: virtual_host_name
+      regex: "^vhost\\.((.+?)\\.).*"
+    - tag_name: listener_address
+      regex: "^listener\\.((.+?)\\.).*"
+    - tag_name: http_conn_manager_prefix
+      regex: "^http\\.((.*?)\\.)"
+    - tag_name: grpc_service
+      regex: "^grpc\\.((.+?)\\.).*"
+  histogram_bucket_settings:
+    - match:
+        prefix: "http.inbound.request_time"
+      buckets: [0.5, 1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
+    - match:
+        prefix: "cluster.upstream_rq_time"
+      buckets: [0.5, 1, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000]
 
 node:
   id: envoy-proxy
   cluster: transaction-debugger
+  metadata:
+    service_name: transaction-debugger-envoy
+    service_version: "1.0.0"
+    environment: "development"
+    region: "local"
+    availability_zone: "local-az"
